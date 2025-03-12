@@ -42,3 +42,5 @@ next-env.d.ts
 
 # 환경 변수 파일 제외
 .env.local
+
+FE.code-workspace
