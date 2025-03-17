@@ -24,8 +24,8 @@ export default function LogIn() {
     //로그인 요청
     try{
       // 실제 백엔드 API 주소로 변경해야함
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/auth/login", {   
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/login", {   
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,13 +72,13 @@ export default function LogIn() {
                 id="email" 
                 type="email" 
                 value={email} 
-                className="invalid:border-pink-500 invalid:text-pink-500 focus:invalid:border-pink-500 focus:invalid:outline-pink-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none"
+                className="invalid:border-red-300 invalid:text-red-400 focus:invalid:border-red-400 focus:invalid:outline-red-400 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none"
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="relative space-y-2">
               <Label htmlFor="password">Password*</Label>
               <Input
                 id="password"
@@ -90,7 +90,7 @@ export default function LogIn() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/128 text-gray-500"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>

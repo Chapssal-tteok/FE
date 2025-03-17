@@ -35,8 +35,9 @@ export default function InterviewPage() {
   const loadInitialQuestion = async () => {
     setIsLoading(true)
     try {
-      // 백엔드 API 호출_실제 API 주소로 변경 필요
-      const response = await fetch("/api/interview/initial-question")
+      // 백엔드 API 호출
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/interviews")
       const data = await response.json()
       setMessages([{ role: "assistant", content: data.question }])
       if (isVoiceMode) {
@@ -60,8 +61,9 @@ export default function InterviewPage() {
 
     // 답변에 대한 피드백 생성
     try {
-      // 백엔드 API 호출_실제 API 주소로 변경 필요
-      const response = await fetch("/api/interview/response", {
+      // 백엔드 API 호출
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/interviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userMessage: input }),
@@ -86,7 +88,8 @@ export default function InterviewPage() {
   const speakText = async (text: string) => {
     try {
       // 백엔드 API 호출로 대체_실제 API 주소로 변경 필요
-      const response = await fetch("/api/tts", {
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/interviews/{interviews_id}/audio-qas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -122,7 +125,8 @@ export default function InterviewPage() {
       mediaRecorder.addEventListener("stop", async () => {
         const audioBlob = new Blob(audioChunks)
         // 백엔드 API 호출로 대체_실제 API 주소로 변경 필요
-        const response = await fetch("/api/stt", {
+        const API_URL = process.env.PUBLIC_API_URL;
+        const response = await fetch("${API_URL}/interviews/{interviews_id}/audio-qas/{qa_id}", {
           method: "POST",
           body: audioBlob,
         })

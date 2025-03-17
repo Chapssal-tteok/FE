@@ -49,7 +49,8 @@ export default function MyPage() {
   const fetchResumes = async () => {
     try {
         // API 호출 필요
-      const response = await fetch("/api/resumes")
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/resumes/{resume_id}")
       const data = await response.json()
       setResumes(data)
     } catch (error) {
@@ -60,7 +61,8 @@ export default function MyPage() {
   const fetchInterviews = async () => {
     try {
         // API 호출 필요
-      const response = await fetch("/api/interviews")
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/interviews/{interview_id}")
       const data = await response.json()
       setInterviews(data)
     } catch (error) {
@@ -86,7 +88,8 @@ export default function MyPage() {
     if (!validatePasswords()) return
     try {
         // API 호출 필요
-      const response = await fetch("/api/change-password", {
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/users/password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),

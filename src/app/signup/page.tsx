@@ -40,8 +40,8 @@ export default function SignUp() {
     // 회원가입 요청
     try{
       // 실제 백엔드 API 주소로 변경해야함
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/auth/signup", {   
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/signup", {   
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -100,7 +100,7 @@ export default function SignUp() {
               />
 
               {!validatePassword(password) && password.length > 0 && (
-                <p className="text-red-500 text-sm">
+                <p className="text-red-500 text-xs">
                   비밀번호는 영문과 숫자를 포함하고, 최소 8자 이상이어야 합니다.
                 </p>
               )}
@@ -117,16 +117,16 @@ export default function SignUp() {
               />
 
               {confirmPassword.length > 0 && password !== confirmPassword ? (
-                <p className="text-red-500 text-sm">⚠️ 입력한 비밀번호와 일치하지 않습니다.</p>
+                <p className="text-red-500 text-xs">⚠️ 입력한 비밀번호와 일치하지 않습니다.</p>
               ) : confirmPassword.length > 0 && password === confirmPassword ? (
-                <p className="text-green-500 text-sm">✅ 비밀번호가 일치합니다.</p>
+                <p className="text-green-500 text-xs">✅ 비밀번호가 일치합니다.</p>
               ) : null}
  
             </div>
 
             {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
 
-            <Button  type="submit" className="disabled:{!validatePassword(password) || password !== confirmPassword}bg-lime-400 hover:bg-lime-500 w-full">
+            <Button  type="submit" className="bg-lime-400 hover:bg-lime-500 disabled:{!validatePassword(password) || password !== confirmPassword} w-full">
               Sign Up
             </Button>
           </form>
