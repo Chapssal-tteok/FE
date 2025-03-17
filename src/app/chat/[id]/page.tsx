@@ -14,11 +14,9 @@ export default function Chat({ params }: { params: { id: string } }) {
       {/* Sidebar */}
       <div className="w-64 bg-gray-50 border-r">
         <div className="p-4 border-b">
-
           <Link href="/" className="text-xl font-bold">
             PreView
           </Link>
-
         </div>
         <div className="p-4">
 
@@ -49,7 +47,7 @@ export default function Chat({ params }: { params: { id: string } }) {
             </Link>
             
             {/*로그아웃을 누르면 로그아웃되고 메인이나 로그인 페이지로 이동하도록 해야 함*/}
-            <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700">
+            <Button variant="ghost" className="w-full justify-start">
               <LogOut className="w-4 h-4 mr-2" />
               Log out
             </Button>
