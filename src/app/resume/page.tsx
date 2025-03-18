@@ -38,28 +38,53 @@ export default function NewResume() {
   }
 
   const deleteQuestion = () => {
-    // 마지막 문항을 제거 ---맞는지 확인하기
     if (questions.length > 1) {
-      const newQuestions = [...questions]
-      newQuestions.pop()
-      setQuestions(newQuestions)
+      setQuestions(questions.slice(0, -1))
     }
   }
 
-  //수정 필요
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // 제출 로직 추가 필요
-    // api 호출로 서버에 데이터 전송?
-    console.log("제출된 데이터:", { company, position, questions })
+    
+     // 입력 필드 검증
+    if (!company.trim() || !position.trim()) {
+      alert("회사명과 지원 직무를 입력해주세요.")
+      return
+    }
 
-    // 채팅 페이지로 이동
-    router.push("/chat/[id]") // 실제 구현 시 고유한 ID를 생성하여 사용해야 함
+    for (const q of questions) {
+      if (!q.question.trim() || !q.answer.trim()) {
+        alert("모든 문항과 답변을 작성해주세요.")
+        return
+      }
+    }
+
+    try {
+      // 서버로 데이터 전송
+      const API_URL = process.env.PUBLIC_API_URL
+      const response = await fetch("${API_URL}/resumes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ company, position, questions })
+      })
+
+      if (!response.ok) {
+        throw new Error("서버 오류 발생")
+      }
+
+      const result = await response.json()
+      console.log("제출 완료:", result)
+
+      // 생성된 ID 기반으로 채팅 페이지 이동
+      router.push(`/chat/${result.id}`)
+    } catch (error) {
+      console.error("제출 실패:", error)
+      alert("제출 중 오류가 발생했습니다.")
+    }
   }
 
-  if (!isLoggedIn) {
-    return null // 또는 로딩 인디케이터
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-200 to-white p-4">
