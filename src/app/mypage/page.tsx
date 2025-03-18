@@ -27,15 +27,18 @@ interface Interview {
 }
 
 export default function MyPage() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, logout } = useAuth()
   const router = useRouter()
   const [resumes, setResumes] = useState<Resume[]>([])
   const [interviews, setInterviews] = useState<Interview[]>([])
+
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
   const [passwordError, setPasswordError] = useState("")
+  const [deleteError, setDeleteError] = useState("")
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -46,6 +49,7 @@ export default function MyPage() {
     }
   }, [isLoggedIn, router])
 
+  // 자기소개서 가져오기
   const fetchResumes = async () => {
     try {
         // API 호출 필요
@@ -58,6 +62,7 @@ export default function MyPage() {
     }
   }
 
+  // 면접 기록 가져오기
   const fetchInterviews = async () => {
     try {
         // API 호출 필요
@@ -70,6 +75,62 @@ export default function MyPage() {
     }
   }
 
+  // 로그아웃
+  const handleLogout = () => {
+    logout()
+    router.push("/")
+  }
+
+  // 회원 탈퇴 요청 (비밀번호 확인)
+  const handleDeactivate = async () => {
+    try {
+        // API 호출 필요
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/users/${user_id}/deactivate", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword }),
+      })
+
+      if(!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "비밀번호가 올바르지 않습니다.")
+      }
+
+      // 탈퇴 확인 단계로 이동
+      setIsDeleteDialogOpen(true)
+      setDeleteError("")
+    } catch (error:any) {
+      setDeleteError(error.message)
+    }
+  }
+
+  // 회원 탈퇴
+  const handleDeleteAccount = async () => {
+    try {
+        //  API 호출 필요
+      const API_URL = process.env.PUBLIC_API_URL;
+      const response = await fetch("${API_URL}/users/${user_id}", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword }),
+      })
+
+      if(!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "회원 탈퇴에 실패하였습니다.")
+      }
+
+      logout()
+      router.push("/")
+    }
+    catch (error:any) {
+      console.error("Failed to delete account:", error)
+      setDeleteError("회원 탈퇴 중 오류가 발생했습니다.")
+    }
+  }
+
+  // 비밀번호 확인
   const validatePasswords = () => {
     if (newPassword !== confirmNewPassword) {
       setPasswordError("새 비밀번호가 일치하지 않습니다.")
@@ -83,6 +144,7 @@ export default function MyPage() {
     return true
   }
 
+  // 비밀번호 변경
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validatePasswords()) return
@@ -115,7 +177,12 @@ export default function MyPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-white p-4">
       <div className="container max-w-4xl mx-auto">
+
         <h1 className="text-3xl font-bold mb-8">마이 페이지</h1>
+        <div className="flex justify-end">
+            <Button variant="outline" onClick={handleLogout}>Log out</Button>
+          </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -131,6 +198,7 @@ export default function MyPage() {
                   </li>
                 ))}
               </ul>
+
               {/* 새 자기소개서 작성 버튼 */}
               <div className="mt-8 text-center">
                 <Link href="/resume">
@@ -157,8 +225,10 @@ export default function MyPage() {
             </CardContent>
           </Card>
         </div>
-        <div className="mt-8 text-center">
+
+        <div className="mt-8 text-center space-x-4">
           <Button onClick={() => setIsPasswordDialogOpen(true)}>비밀번호 변경</Button>
+          <Button variant="destructive" onClick={handleDeactivate}>회원 탈퇴</Button>
         </div>
       </div>
 
@@ -205,6 +275,31 @@ export default function MyPage() {
               <Button type="submit">변경</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>정말 탈퇴하시겠습니까?</DialogTitle>
+          </DialogHeader>
+          <p>회원 탈퇴를 진행하면 계정이 완전히 삭제됩니다.</p>
+
+          <div className="space-y-4">
+            <Label htmlFor="deletePassword">비밀번호 입력</Label>
+              <Input
+                id="deletePassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+          </div>
+
+          {deleteError && <p className="text-red-500 text-sm">{deleteError}</p>}
+          <DialogFooter className="mt-4">
+            <Button variant="destructive" onClick={handleDeleteAccount}>회원 탈퇴</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
