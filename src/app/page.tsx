@@ -8,7 +8,7 @@ import Image from "next/image";
 
 export default function Home() {
   const router = useRouter()
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, logout } = useAuth()
 
   const handleStart = () => {
     if (isLoggedIn) {
@@ -16,6 +16,11 @@ export default function Home() {
     } else {
       router.push("/login")
     }
+  }
+
+  const handleLogout = () => {
+    logout()
+    router.push("/")
   }
 
   return (
@@ -31,7 +36,7 @@ export default function Home() {
               <Link href="/mypage">
                 <Button variant="outline">My Page</Button>
               </Link>
-              <Button variant="outline">Log out</Button> //로그아웃되도록
+              <Button variant="outline" onClick={handleLogout}>Log out</Button>
             </div>
           ) : (
             <Link href="/login">
@@ -43,7 +48,7 @@ export default function Home() {
 
       <main className="container flex flex-col items-center justify-center min-h-screen px-4 text-center">
         <div className="relative w-full h-screen flex items-center justify-center">
-          <Image src="/Gradients.png" alt="배경" layout="fill" objectFit="cover" />
+          <Image src="/Gradients_bg.png" alt="배경" layout="fill" objectFit="cover" />
           <div className="relative z-10 space-y-8 flex flex-col items-center justify-center h-full">
             <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
               Preview
