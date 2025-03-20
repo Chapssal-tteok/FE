@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { useAuth } from "@/contexts/AuthContext"
+import { MessageCircle, UserCircle2, LogOut } from "lucide-react"
+import Link from "next/link"
 
 interface Message {
   role: "user" | "assistant"
@@ -14,7 +16,7 @@ interface Message {
 }
 
 export default function InterviewPage() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, logout } = useAuth()
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
@@ -30,6 +32,11 @@ export default function InterviewPage() {
       loadInitialQuestion()
     }
   }, [isLoggedIn, router])
+
+  const handleLogout = () => {
+    logout()
+    router.push("/")
+  }
 
   // 질문 생성
   const loadInitialQuestion = async () => {
@@ -157,8 +164,39 @@ export default function InterviewPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-white p-4">
+    {/* Sidebar */}
+      <div className="w-64 bg-gray-50 border-r">
+        <div className="p-4 border-b">
+          <Link href="/" className="text-xl font-bold">PreView</Link>
+        </div>
+        <div className="p-4">
+          <Link href="/resume">
+            <Button variant="outline" className="w-full justify-start">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              New Chat
+            </Button>
+          </Link>
+        </div>
+
+        <div className="absolute bottom-0 w-64 p-4 border-t">
+          <div className="space-y-2">
+            <Link href="/mypage">
+              <Button variant="ghost" className="w-full justify-start">
+                <UserCircle2 className="w-4 h-4 mr-2" />
+                My Page
+              </Button>
+            </Link>
+            
+            <Button variant="ghost" onClick={handleLogout} className="w-full justify-start">
+              <LogOut className="w-4 h-4 mr-2" />
+              Log out
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <div className="container max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">면접 연습</h1>
+        <h1 className="text-3xl font-bold mb-6">Interview</h1>
         <Card>
           <CardContent className="p-6">
             <div className="space-y-4 mb-4 h-[60vh] overflow-y-auto">
