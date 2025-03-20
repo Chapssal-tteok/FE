@@ -67,7 +67,7 @@ export default function Chat({ resumes }: { resumes: { id: string } }) {
   }
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white p-4">
 
       {/* Sidebar */}
       <div className="w-64 bg-gray-50 border-r">
@@ -102,6 +102,7 @@ export default function Chat({ resumes }: { resumes: { id: string } }) {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
+        <h1 className="text-3xl font-bold mb-6">Resume Feedback</h1>
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4">
           <div className="max-w-3xl mx-auto space-x-4">
