@@ -42,22 +42,6 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* @font-face {
-  font-family: GmarketMedium;
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/font/GMARKETSANSTTFMEDIUM.TTF") format("truetype");
-}
-
-@font-face {
-  font-family: GmarketBold;
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/font/GMARKETSANSTTFBOLD.TTF") format("truetype");
-} */
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -97,6 +81,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-light-green: #B9FF66
 }
 
 body {
@@ -145,4 +130,14 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-blink {
+  animation: blink 0.5s step-end infinite;
 }
