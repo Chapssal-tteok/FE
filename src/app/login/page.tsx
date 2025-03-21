@@ -18,14 +18,14 @@ export default function LogIn() {
   const router = useRouter()
   const { login } = useAuth()
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     //로그인 요청
     try{
-      // 실제 백엔드 API 주소로 변경해야함
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/login", {   
+      const response = await fetch(`${API_URL}/login`, {   
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -38,11 +38,11 @@ export default function LogIn() {
       }
 
       const data = await response.json() // 토큰 응답 받기
-      login(data.token) // 토큰 저장
+      login(data.token, data.user) // 토큰 및 사용자 정보 저장
 
       // 로그인 후 자소서 작성 페이지로 이동
       alert("로그인에 성공했습니다.")
-      router.push("/resume")
+      router.push("/writeResume")
 
     } catch (error) {
       console.error("로그인 오류:", error)
@@ -86,11 +86,12 @@ export default function LogIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/128 text-gray-500"
+                className="absolute right-4 top-1/5 h-full flex items-center text-gray-600"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>

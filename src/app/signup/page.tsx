@@ -16,6 +16,8 @@ export default function SignUp() {
   const [errorMessage, setErrorMessage] = useState("")
   const router = useRouter()
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
+
   const validatePassword = (password: string) => {
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[a-zA-Z\d]{8,}$/
     return regex.test(password)
@@ -39,9 +41,7 @@ export default function SignUp() {
     
     // 회원가입 요청
     try{
-      // 실제 백엔드 API 주소로 변경해야함
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/signup", {   
+      const response = await fetch(`${API_URL}/signup`, {   
         method: "POST",
         headers: {
           "Content-Type": "application/json",

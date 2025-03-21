@@ -25,6 +25,8 @@ export default function InterviewPage() {
   const [isListening, setIsListening] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
+
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/login")
@@ -42,9 +44,7 @@ export default function InterviewPage() {
   const loadInitialQuestion = async () => {
     setIsLoading(true)
     try {
-      // 백엔드 API 호출
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/interviews")
+      const response = await fetch(`${API_URL}/interviews`)
       const data = await response.json()
       setMessages([{ role: "assistant", content: data.question }])
       if (isVoiceMode) {
@@ -68,9 +68,7 @@ export default function InterviewPage() {
 
     // 답변에 대한 피드백 생성
     try {
-      // 백엔드 API 호출
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/interviews", {
+      const response = await fetch(`${API_URL}/interviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userMessage: input }),
@@ -94,9 +92,7 @@ export default function InterviewPage() {
   // 음성모드_ai가 생성한 질문을 음성으로 변환
   const speakText = async (text: string) => {
     try {
-      // 백엔드 API 호출로 대체_실제 API 주소로 변경 필요
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/interviews/{interviews_id}/audio-qas", {
+      const response = await fetch(`${API_URL}/interviews/{interviews_id}/audio-qas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -131,9 +127,7 @@ export default function InterviewPage() {
 
       mediaRecorder.addEventListener("stop", async () => {
         const audioBlob = new Blob(audioChunks)
-        // 백엔드 API 호출로 대체_실제 API 주소로 변경 필요
-        const API_URL = process.env.PUBLIC_API_URL;
-        const response = await fetch("${API_URL}/interviews/{interviews_id}/audio-qas/{qa_id}", {
+        const response = await fetch(`${API_URL}/interviews/{interviews_id}/audio-qas/{qa_id}`, {
           method: "POST",
           body: audioBlob,
         })
@@ -170,10 +164,10 @@ export default function InterviewPage() {
           <Link href="/" className="text-xl font-bold">PreView</Link>
         </div>
         <div className="p-4">
-          <Link href="/resume">
+          <Link href="/writeResume">
             <Button variant="outline" className="w-full justify-start">
               <MessageCircle className="w-4 h-4 mr-2" />
-              New Chat
+              New Resume
             </Button>
           </Link>
         </div>

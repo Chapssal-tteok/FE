@@ -6,20 +6,22 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
 import { MessageCircle, UserCircle2, LogOut, RefreshCw, Send } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 
-export default function Chat({ resumes }: { resumes: { id: string } }) {
+export default function Chat() {
+  const resume_id = useParams().id
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
   const { logout } = useAuth()
   const router = useRouter()
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
+
   useEffect(() => {
     // Chat messages fetch
     const fetchInitialMessages = async () => {
       try {
-        const API_URL = process.env.PUBLIC_API_URL
-        const response = await fetch(`${API_URL}/resumes/${resumes.id}`)
+        const response = await fetch(`${API_URL}/resumes/${resume_id}`)
         
         if(!response.ok) {
           throw new Error("Failed to fetch resume data")
@@ -33,7 +35,7 @@ export default function Chat({ resumes }: { resumes: { id: string } }) {
     }
 
     fetchInitialMessages()
-  }, [resumes.id])
+  }, [resume_id])
 
   const handleLogout = () => {
     logout()
@@ -43,16 +45,11 @@ export default function Chat({ resumes }: { resumes: { id: string } }) {
   const handleSendMessage = async () => {
     if(!message.trim()) return
 
-    const userMessage = { role: "user", content: message }
-    setMessages((prev) => [...prev, userMessage])
-    setMessage("")
-
     try {
-      const API_URL = process.env.PUBLIC_API_URL
-      const response = await fetch(`${API_URL}/resumes/${resumes.id}/analyze`, {
+      const response = await fetch(`${API_URL}/resumes/${resume_id}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({ id: resumes, message }),
+        body: JSON.stringify({ message }),
       })
 
       if (!response.ok) {
@@ -60,7 +57,10 @@ export default function Chat({ resumes }: { resumes: { id: string } }) {
       }
 
       const data = await response.json()
-      setMessages((prev) => [...prev, { role: "ai", content: data.reply }])
+      setMessages((prev) => [...prev, 
+        { role: "user", content: message },
+        { role: "ai", content: data.reply }])
+      setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
     }
@@ -75,10 +75,10 @@ export default function Chat({ resumes }: { resumes: { id: string } }) {
           <Link href="/" className="text-xl font-bold">PreView</Link>
         </div>
         <div className="p-4">
-          <Link href="/resume">
+          <Link href="/writeResume">
             <Button variant="outline" className="w-full justify-start">
               <MessageCircle className="w-4 h-4 mr-2" />
-              New Chat
+              New Resume
             </Button>
           </Link>
         </div>

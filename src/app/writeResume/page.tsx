@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
 import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,8 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlusCircle, ArrowLeft, MinusCircle } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/contexts/AuthContext"
+
 
 interface Question {
   id: number
@@ -21,6 +22,8 @@ interface Question {
 export default function NewResume() {
   const { isLoggedIn } = useAuth()
   const router = useRouter()
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -37,9 +40,9 @@ export default function NewResume() {
     setQuestions([...questions, { id: newId, question: "", answer: "" }])
   }
 
-  const deleteQuestion = () => {
+  const deleteQuestion = (id: number) => {
     if (questions.length > 1) {
-      setQuestions(questions.slice(0, -1))
+      setQuestions(questions.filter((q) => q.id !== id))
     }
   }
 
@@ -61,8 +64,7 @@ export default function NewResume() {
 
     try {
       // 서버로 데이터 전송
-      const API_URL = process.env.PUBLIC_API_URL
-      const response = await fetch("${API_URL}/resumes", {
+      const response = await fetch(`${API_URL}/resumes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -76,7 +78,6 @@ export default function NewResume() {
 
       const result = await response.json()
       console.log("제출 완료:", result)
-
       // 생성된 ID 기반으로 채팅 페이지 이동
       router.push(`/chat/${result.id}`)
     } catch (error) {
@@ -88,13 +89,9 @@ export default function NewResume() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-200 to-white p-4">
-
-      <Link href="/" className="absolute top-4 left-4">
-        <h1 className="text-2xl font-bold">PreView</h1>
-      </Link>
+      <h1 className="text-2xl font-bold">PreView</h1>
 
       <div className="container max-w-4xl mx-auto">
-
         <Link href="/" className="inline-block mb-4">
           <Button variant="ghost" className="p-2">
             <ArrowLeft className="w-6 h-6" />
@@ -107,36 +104,17 @@ export default function NewResume() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-
                   <Label htmlFor="company">회사명</Label>
                   <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} required />
-
                 </div>
                 <div className="space-y-2">
-
                   <Label htmlFor="position">지원 직무</Label>
                   <Input id="position" value={position} onChange={(e) => setPosition(e.target.value)} required />
-
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-
-                  <h3 className="text-lg font-semibold">자기소개서 문항</h3>
-
-                  {/*문항 추가, 삭제 버튼*/}
-                  <Button type="button" variant="outline" onClick={addQuestion} className="text-lime-600">
-                    <PlusCircle className="w-4 h-4 mr-2" />
-                    문항 추가
-                  </Button>
-
-                  <Button type="button" variant="outline" onClick={deleteQuestion} className="text-red-400">
-                    <MinusCircle className="w-4 h-4 mr-2" />
-                    문항 삭제
-                  </Button>
-
-                </div>
+                <h3 className="text-lg font-semibold">자기소개서 문항</h3>
 
                 {questions.map((q, index) => (
                   <div key={q.id} className="space-y-2 p-4 bg-green-50 rounded-lg">
@@ -146,28 +124,37 @@ export default function NewResume() {
                       id={`question-${q.id}`}
                       value={q.question}
                       onChange={(e) => {
-                        const newQuestions = [...questions]
-                        newQuestions[index].question = e.target.value
+                        const newQuestions = questions.map((item) => 
+                          item.id === q.id ? { ...item, question: e.target.value } : item)
                         setQuestions(newQuestions)
                       }}
                       required
                     />
 
                     <Label htmlFor={`answer-${q.id}`}>답변 {index + 1}</Label>
-
                     <Textarea
                       id={`answer-${q.id}`}
                       value={q.answer}
                       onChange={(e) => {
-                        const newQuestions = [...questions]
-                        newQuestions[index].answer = e.target.value
+                        const newQuestions = questions.map((item) =>
+                          item.id === q.id ? { ...item, answer: e.target.value } : item)
                         setQuestions(newQuestions)
                       }}
                       className="min-h-[100px]"
                       required
                     />
 
-                  </div>
+                  {/*문항 추가, 삭제 버튼*/}
+                  <Button type="button" variant="outline" onClick={addQuestion} className="text-lime-600">
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    문항 추가
+                  </Button>
+
+                  <Button type="button" variant="outline" onClick={() => deleteQuestion(q.id)} className="text-red-400">
+                    <MinusCircle className="w-4 h-4 mr-2" />
+                    문항 삭제
+                  </Button>
+                </div>
                 ))}
 
               </div>
@@ -175,7 +162,6 @@ export default function NewResume() {
               <Button type="submit" className="w-full bg-lime-400 hover:bg-lime-500">
                 제출
               </Button>
-
             </form>
           </CardContent>
         </Card>
