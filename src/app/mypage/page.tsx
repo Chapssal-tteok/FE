@@ -27,7 +27,7 @@ interface Interview {
 }
 
 export default function MyPage() {
-  const { isLoggedIn, logout } = useAuth()
+  const { isLoggedIn, logout, user } = useAuth()
   const router = useRouter()
   const [resumes, setResumes] = useState<Resume[]>([])
   const [interviews, setInterviews] = useState<Interview[]>([])
@@ -41,6 +41,8 @@ export default function MyPage() {
   const [passwordError, setPasswordError] = useState("")
   const [deleteError, setDeleteError] = useState("")
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/login")
@@ -48,14 +50,12 @@ export default function MyPage() {
       fetchResumes()
       fetchInterviews()
     }
-  }, [isLoggedIn, router])
+  }, [isLoggedIn])
 
   // 자기소개서 가져오기
   const fetchResumes = async () => {
     try {
-        // API 호출 필요
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/resumes/${resume_id}")
+      const response = await fetch(`${API_URL}/resumes`)
       const data = await response.json()
       setResumes(data)
     } catch (error) {
@@ -63,28 +63,10 @@ export default function MyPage() {
     }
   }
 
-  // 자기소개서 삭제
-  const handleDeleteResumes = async () => {
-    try {
-      const API_URL = process.env.PUBLIC_API_URL
-      await Promise.all(
-        selectedResumes.map(async (resume_id) => {
-          await fetch(`${API_URL}/resumes/${resume_id}`, { method: "DELETE" })
-        })
-      )
-      setResumes(resumes.filter((resume) => !selectedResumes.includes(resume.id)))
-      setSelectedResumes([])
-    } catch (error) {
-      console.error("Failed to delete resumes:", error)
-    }
-  }
-
   // 면접 기록 가져오기
   const fetchInterviews = async () => {
     try {
-        // API 호출 필요
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/interviews/${interview_id}")
+      const response = await fetch(`${API_URL}/interviews`)
       const data = await response.json()
       setInterviews(data)
     } catch (error) {
@@ -92,22 +74,23 @@ export default function MyPage() {
     }
   }
 
-  // 면접 기록 삭제
-  const handleDeleteInterviews = async () => {
+  const handleDeleteItems = async (selectedItems: string[], 
+                                  setItems: React.Dispatch<React.SetStateAction<any[]>>, endpoint: string) => {
     try {
-      const API_URL = process.env.PUBLIC_API_URL
-      await Promise.all(
-        selectedInterviews.map(async (interview_id) => {
-          await fetch(`${API_URL}/interviews/${interview_id}`, { method: "DELETE" })
-        })
-      )
-    setInterviews(interviews.filter((interview) => !selectedInterviews.includes(interview.id)))
-    setSelectedInterviews([])
+      await Promise.all(selectedItems.map(id => fetch(`${API_URL}/${endpoint}/${id}`, { method: "DELETE" })));
+      setItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
     } catch (error) {
-      console.error("Failed to delete interviews:", error)
+      console.error(`Failed to delete ${endpoint}:`, error);
     }
   }
-
+  
+  const toggleSelection = 
+  (id: string, selectedItems: string[], setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>) => {
+    setSelectedItems(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }
+  
   // 로그아웃
   const handleLogout = () => {
     logout()
@@ -117,9 +100,8 @@ export default function MyPage() {
   // 회원 탈퇴 요청 (비밀번호 확인)
   const handleDeactivate = async () => {
     try {
-        // API 호출 필요
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/users/${user_id}/deactivate", {
+      if (!user) throw new Error("User not found")
+      const response = await fetch(`${API_URL}/users/${user.id}/deactivate`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword }),
@@ -141,9 +123,8 @@ export default function MyPage() {
   // 회원 탈퇴
   const handleDeleteAccount = async () => {
     try {
-        //  API 호출 필요
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/users/${user_id}", {
+      if (!user) throw new Error("User not found")
+      const response = await fetch(`${API_URL}/users/${user.id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword }),
@@ -156,8 +137,7 @@ export default function MyPage() {
 
       logout()
       router.push("/")
-    }
-    catch (error:any) {
+    } catch (error:any) {
       console.error("Failed to delete account:", error)
       setDeleteError("회원 탈퇴 중 오류가 발생했습니다.")
     }
@@ -182,10 +162,8 @@ export default function MyPage() {
     e.preventDefault()
     if (!validatePasswords()) return
     try {
-        // API 호출 필요
-      const API_URL = process.env.PUBLIC_API_URL;
-      const response = await fetch("${API_URL}/users/password", {
-        method: "POST",
+      const response = await fetch(`${API_URL}/users/password`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       })
@@ -229,20 +207,18 @@ export default function MyPage() {
                       type="checkbox"
                       className="mr-2"
                       checked={selectedResumes.includes(resume.id)}
-                      onChange={() => {
-                        setSelectedResumes((prev) =>
-                          prev.includes(resume.id)
-                            ? prev.filter((id) => id !== resume.id)
-                            : [...prev, resume.id]
-                        )
-                      }}
+                      onChange={() => toggleSelection(resume.id, selectedResumes, setSelectedResumes)}
                     />
-                    <Link href={'/resume/${resume_id}'} className="flex-1">
+                    <Link href={`/resume/${resume.id}`} className="flex-1">
                       <div>
                         <h3 className="font-semibold">{resume.company}</h3>
                         <p className="text-sm text-gray-600">{resume.position}</p>
                         <p className="text-xs text-gray-500">{resume.createdAt}</p>
                       </div>
+                    </Link>
+                    <Link href={`/chat/${resume.id}`}>
+                    {/* 기존 채팅 페이지로 이동하는지 확인 */}
+                      <Button variant="outline" className="text-lime-500">피드백 받기</Button>
                     </Link>
                   </li>
                 ))}
@@ -250,14 +226,16 @@ export default function MyPage() {
 
               {/* 새 자기소개서 작성 버튼 */}
               <div className="mt-8 text-center">
-                <Link href="/resume">
+                <Link href="/writeResume">
                 <Button className="bg-lime-400 hover:bg-lime-500">새 자기소개서 작성</Button>
                 </Link>
               </div>
 
               {/* 선택 삭제 버튼*/}
               <div className="mt-4 text-center">
-                <Button variant="destructive" className="text-red-400" onClick={handleDeleteResumes}>삭제</Button>
+                <Button variant="destructive" onClick={() => handleDeleteItems(selectedResumes, setResumes, "resumes")}>
+                  삭제
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -274,15 +252,9 @@ export default function MyPage() {
                       type="checkbox"
                       className="mr-2"
                       checked={selectedInterviews.includes(interview.id)}
-                      onChange={() => {
-                        setSelectedInterviews((prev) =>
-                          prev.includes(interview.id)
-                            ? prev.filter((id) => id !== interview.id)
-                            : [...prev, interview.id]
-                        )
-                      }}
+                      onChange={() => toggleSelection(interview.id, selectedInterviews, setSelectedInterviews)}
                     />
-                    <Link href={'/interview/${interview.id}'} className="flex-1">
+                    <Link href={`/interview/${interview.id}`} className="flex-1">
                       <div>
                         <h3 className="font-semibold">{interview.company}</h3>
                         <p className="text-sm text-gray-600">{interview.position}</p>
@@ -292,10 +264,11 @@ export default function MyPage() {
                   </li>
                 ))}
               </ul>
-            
-              {/* 면접 기록 삭제 버튼 */}
+
               <div className="mt-8 text-center">
-                <Button variant="destructive" className="text-red-400" onClick={handleDeleteInterviews}>삭제</Button>
+                <Button variant="destructive" onClick={() => handleDeleteItems(selectedInterviews, setInterviews, "interviews")}>
+                  삭제
+                </Button>
               </div>
             </CardContent>
           </Card>
