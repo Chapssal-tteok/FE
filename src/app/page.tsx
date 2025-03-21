@@ -4,15 +4,49 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "../contexts/AuthContext"
-import Image from "next/image";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const router = useRouter()
   const { isLoggedIn, logout } = useAuth()
 
+  const [typedText, setTypedText] = useState("")
+  const [typedSubText, setTypedSubText] = useState("")
+  const [index, setIndex] = useState(0)
+  const [subIndex, setSubIndex] = useState(0)
+  const [typingCompleted, setTypingCompleted] = useState(false)
+  const [cursorInSubText, setCursorInSubText] = useState(false)
+
+  const text = "PreView"
+  const subText = "자기소개서 AI 분석 및\n면접 예상 질문 제공 서비스"
+  
+  useEffect(() => {
+    if (index < text.length) {
+      const timer = setTimeout(() => {
+        setTypedText((prev) => prev + text[index])
+        setIndex(index + 1)
+      }, 150) // 글자 간격 설정
+      return () => clearTimeout(timer)
+    } else {
+      setTypingCompleted(true)
+    }
+  }, [index])
+  
+  useEffect(() => {
+    if (typingCompleted && subIndex < subText.length) {
+      const timer = setTimeout(() => {
+        setTypedSubText((prev) => prev + subText[subIndex])
+        setSubIndex(subIndex + 1)
+      }, 50) // 서브 텍스트 타이핑 속도 설정
+      return () => clearTimeout(timer)
+    } else if(subIndex >= subText.length) {
+      setCursorInSubText(false)
+    }
+  }, [subIndex, typingCompleted])
+
   const handleStart = () => {
     if (isLoggedIn) {
-      router.push("/resume")
+      router.push("/writeResume")
     } else {
       router.push("/login")
     }
@@ -24,7 +58,7 @@ export default function Home() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-green-50 to-white">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-lime-50 to-white">
       <nav className="absolute top-0 w-full p-4">
         <div className="container flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold">
@@ -47,25 +81,26 @@ export default function Home() {
       </nav>
 
       <main className="container flex flex-col items-center justify-center min-h-screen px-4 text-center">
-        <div className="relative w-full h-screen flex items-center justify-center">
-          <Image src="/Gradients_bg.png" alt="배경" layout="fill" objectFit="cover" />
-          <div className="relative z-10 space-y-8 flex flex-col items-center justify-center h-full">
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
-              Preview
-            </h1>
-            <h2 className="text-2xl leading-tight">
-            자기소개서 AI 분석 및<br />
-            면접 예상 질문 제공 서비스
+        <div className="bg-[url(/Gradients.png)] bg-center relative w-full h-screen flex items-center justify-start">
+          <div className="relative z-10 space-y-8 flex flex-col items-start justify-center h-full ml-80 mb-10">
+            <div className="flex items-center space-x-2">
+              <img src="/Vector.png" alt="icon" className="w-8 h-8 md:h-12 md:w-12 mt-[-14px]"/>
+              <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl relative inline-block">
+                {typedText}
+                {index < text.length && !cursorInSubText && (
+                  <span className="absolute right-0 top-0 w-[2px] h-full bg-black animate-blink"></span>
+                )}
+              </h1>
+            </div>
+
+            <h2 className="text-2xl leading-tight text-left">
+              <span dangerouslySetInnerHTML={{ __html: typedSubText.replace(/\n/g, "<br />") }} />
             </h2>
-            <Button className="text-lg px-8 py-6 rounded-3xl bg-lime-400 hover:bg-lime-500" onClick={handleStart}>
+            <Button className="text-xl px-8 py-7 rounded-3xl shadow-xl shadow-black-500/50 text-black bg-light-green hover:bg-lime-400" onClick={handleStart}>
               시작하기
             </Button>
           </div>
         </div>
-
-        {/* Decorative bubbles */}
-        <div className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full bg-green-400/30 blur-3xl z-[-1]" />
-        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 rounded-full bg-green-400/30 blur-3xl z-[-1]" />
       </main>
     </div>
   )
