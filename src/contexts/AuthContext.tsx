@@ -21,27 +21,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    const storedUser = localStorage.getItem("user")
+    try {
+      const token = localStorage.getItem("token")
+      const storedUser = localStorage.getItem("user")
 
-    if (token && storedUser) {
-      setIsLoggedIn(true)
-      setUser(JSON.parse(storedUser))
+      if (token && storedUser) {
+        setIsLoggedIn(true)
+        setUser(JSON.parse(storedUser))
+      }
+    } catch (error) {
+      console.error("Error accessing localStorage:", error)
     }
   }, [])
 
   const login = (token: string, user: User) => {
-    localStorage.setItem("token", token)
-    localStorage.setItem("user", JSON.stringify(user))
-    setUser(user)
-    setIsLoggedIn(true)
+    try {
+      localStorage.setItem("token", token)
+      localStorage.setItem("user", JSON.stringify(user))
+      setUser(user)
+      setIsLoggedIn(true)
+    } catch (error) {
+      console.error("Error during login:", error)
+    }
   }
 
   const logout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    setUser(null)
-    setIsLoggedIn(false)
+    try {
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+      setUser(null)
+      setIsLoggedIn(false)
+    } catch (error) {
+      console.error("Error during logout:", error)
+    }
   }
 
   return <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>{children}</AuthContext.Provider>
