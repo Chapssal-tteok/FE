@@ -1,4 +1,5 @@
-const OpenAI = require('openai')
+import OpenAI from 'openai'
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
 
 interface Message {
   role: string;
@@ -10,7 +11,7 @@ const openai = new OpenAI({
 })
 
 // 자기소개서 분석
-async function analyzeResume(resume: string, company: string, position: string) {
+export async function analyzeResume(resume: string, company: string, position: string) {
   try {
     const prompt = `
       다음은 ${company}의 ${position} 직무에 지원한 자기소개서입니다.
@@ -44,13 +45,13 @@ async function analyzeResume(resume: string, company: string, position: string) 
         - 맞춤법 오류나 문장의 자연스러운 흐름을 방해하는 부분을 수정하여 제안해주고, 추상적인 표현을 구체적인 언어로 수정해주세요.
     5. 체크리스트 평가
         - 자기소개서가 다음의 항목을 충족하고 있는지 평가하고 피드백해주세요.
-          1. '질문에 대한 답’을 하고 있는가?
-          2. 결론이 ‘근거’를 가지고 있는가? (숫자, 객관적 평가, 결과물)
+          1. '질문에 대한 답'을 하고 있는가?
+          2. 결론이 '근거'를 가지고 있는가? (숫자, 객관적 평가, 결과물)
           3. 소제목 또는 첫 줄이 [HOW+RESULT]을 요약/압축하고 있는가?
-          4. 말하고자 하는 바가 ‘서두’에 배치되어 있는가?
+          4. 말하고자 하는 바가 '서두'에 배치되어 있는가?
           5. 근거가 직무/산업/직장과 '연결'되어 있는가?
           6. 한 개의 사례에서 '한 개의 메세지'를 말하고 있는가?
-          7. 문장이 최대한 ‘짧은 형식’을 취하고 있는가?
+          7. 문장이 최대한 '짧은 형식'을 취하고 있는가?
 
     **Examples**
           
@@ -65,8 +66,8 @@ async function analyzeResume(resume: string, company: string, position: string) 
             1. "책임감"이라는 키워드와 "팀 프로젝트"라는 구체적인 상황을 제시한 점이 좋아요. 이는 협업을 중시하는 기업 문화와 잘 맞아 보이네요.    
         이 부분은 아쉬워요!        
             1. "다른 사람들과 조화를 이루는 것을 중요하게 생각합니다"라는 문장이 다소 일반적이에요. 구체적인 사례를 추가하면 더 설득력이 있을 것 같아요.        
-            2. “팀 프로젝트에서 주어진 역할을 충실히 수행”했다는 문장을 더 구체적으로 어떤 역할을 수행했는지, 프로젝트에 얼마나 기여했는지 구체적인 수치와 함께 제시하면 전문성을 높일 수 있어요.        
-            3. “다양한 팀 프로젝트”와 같이 애매한 표현 대신 구체적인 근거나 수치를 사용하면 좋아요.         
+            2. "팀 프로젝트에서 주어진 역할을 충실히 수행"했다는 문장을 더 구체적으로 어떤 역할을 수행했는지, 프로젝트에 얼마나 기여했는지 구체적인 수치와 함께 제시하면 전문성을 높일 수 있어요.        
+            3. "다양한 팀 프로젝트"와 같이 애매한 표현 대신 구체적인 근거나 수치를 사용하면 좋아요.         
             4. "[책임감으로 팀원들을 이끌다]"라는 소제목은 다소 모호해보여요.    
         개선된 문장 예시    
             "[팀 리더로 프로젝트 성공을 이끌다] 
@@ -85,7 +86,7 @@ async function analyzeResume(resume: string, company: string, position: string) 
     `
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -108,16 +109,16 @@ async function analyzeResume(resume: string, company: string, position: string) 
 }
 
 // 채팅 응답
-async function getChatResponse(message: string, conversationHistory: Message[], resume: string) {
+export async function getChatResponse(message: string, conversationHistory: Message[], resume: string) {
   try {
-    const messages = [
+    const messages: ChatCompletionMessageParam[] = [
       {
         role: "system",
         content: `당신은 자기소개서 분석 전문가입니다. 다음 자기소개서에 대해 답변해주세요:
         ${resume}`
       },
       ...conversationHistory.map(msg => ({
-        role: msg.role.toLowerCase(),
+        role: msg.role.toLowerCase() as "user" | "assistant",
         content: msg.content
       })),
       {
@@ -127,8 +128,8 @@ async function getChatResponse(message: string, conversationHistory: Message[], 
     ]
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: messages,
+      model: "gpt-4",
+      messages,
       temperature: 0.7,
       max_tokens: 2048
     })
@@ -138,9 +139,4 @@ async function getChatResponse(message: string, conversationHistory: Message[], 
     console.error('OpenAI API 에러:', error);
     throw new Error('채팅 응답 생성 중 오류가 발생했습니다.');
   }
-}
-
-module.exports = {
-  analyzeResume,
-  getChatResponse
-}
+} 
