@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { useAuth } from "@/contexts/AuthContext"
-import { MessageCircle, UserCircle2, LogOut } from "lucide-react"
+import { FilePen, UserCircle2, LogOut } from "lucide-react"
 import Link from "next/link"
 
 interface Message {
@@ -166,7 +166,7 @@ export default function InterviewPage() {
         <div className="p-4">
           <Link href="/writeResume">
             <Button variant="outline" className="w-full justify-start">
-              <MessageCircle className="w-4 h-4 mr-2" />
+              <FilePen className="w-4 h-4 mr-2" />
               New Resume
             </Button>
           </Link>
@@ -189,6 +189,7 @@ export default function InterviewPage() {
         </div>
       </div>
 
+      {/* Main Chat Area */}
       <div className="container max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Interview</h1>
         <Card>
