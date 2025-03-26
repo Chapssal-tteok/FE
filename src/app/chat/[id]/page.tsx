@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
-import { MessageCircle, UserCircle2, LogOut, RefreshCw, Send } from "lucide-react"
+import { FilePen, UserCircle2, LogOut, RefreshCw, Send } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 
 export default function Chat() {
@@ -77,7 +77,7 @@ export default function Chat() {
         <div className="p-4">
           <Link href="/writeResume">
             <Button variant="outline" className="w-full justify-start">
-              <MessageCircle className="w-4 h-4 mr-2" />
+              <FilePen className="w-4 h-4 mr-2" />
               New Resume
             </Button>
           </Link>
