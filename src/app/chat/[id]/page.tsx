@@ -12,25 +12,54 @@ export default function Chat() {
   const resume_id = useParams().id
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const { logout } = useAuth()
   const router = useRouter()
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
   useEffect(() => {
-    // Chat messages fetch
     const fetchInitialMessages = async () => {
       try {
-        const response = await fetch(`${API_URL}/resumes/${resume_id}`)
-        
-        if(!response.ok) {
+        setIsLoading(true)
+        // 자기소개서 데이터 가져오기
+        const resumeResponse = await fetch(`${API_URL}/resumes/${resume_id}`)
+        if(!resumeResponse.ok) {
           throw new Error("Failed to fetch resume data")
         }
+        const resumeData = await resumeResponse.json()
 
-        const data = await response.json()
-        setMessages([{ role: "AI", content: data.feedback }])
+        // ChatGPT에 자기소개서 분석 요청
+        const analysisResponse = await fetch(`${API_URL}/analyze`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            resume: resumeData.content,
+            company: resumeData.company,
+            position: resumeData.position
+          })
+        })
+
+        if(!analysisResponse.ok) {
+          throw new Error("Failed to analyze resume")
+        }
+
+        const analysisData = await analysisResponse.json()
+        
+        // 초기 메시지 설정
+        setMessages([
+          { role: "AI", content: "안녕하세요! 자기소개서 분석을 도와드리겠습니다." },
+          { role: "AI", content: analysisData.feedback }
+        ])
       } catch (error) {
         console.error("Error fetching feedback", error)
+        setMessages([{ role: "AI", content: "죄송합니다. 자기소개서 분석 중 오류가 발생했습니다." }])
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -46,10 +75,18 @@ export default function Chat() {
     if(!message.trim()) return
 
     try {
-      const response = await fetch(`${API_URL}/resumes/${resume_id}/analyze`, {
+      setIsLoading(true)
+      const response = await fetch(`${API_URL}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({ message }),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          message,
+          resume_id,
+          conversation_history: messages
+        }),
       })
 
       if (!response.ok) {
@@ -59,10 +96,16 @@ export default function Chat() {
       const data = await response.json()
       setMessages((prev) => [...prev, 
         { role: "user", content: message },
-        { role: "ai", content: data.reply }])
+        { role: "AI", content: data.reply }])
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
+      setMessages(prev => [...prev, 
+        { role: "user", content: message },
+        { role: "AI", content: "죄송합니다. 응답을 생성하는 중 오류가 발생했습니다." }
+      ])
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -102,23 +145,34 @@ export default function Chat() {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mb-6">Resume Feedback</h1>
+        <h1 className="text-3xl font-bold mb-6">자기소개서 피드백</h1>
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-3xl mx-auto space-x-4">
+          <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((msg, idx) => (
-              <div key={idx} className={'p-4 rounded-lg ${msg.role === "ai" ? "bg-lime-100" : "bg-gray-100"}'}>
-                <p className="text-sm font-medium">{msg.role === "ai" ? "AI" : "You"}</p>
-                <p className="mt-1">{msg.content}</p>
+              <div key={idx} className={`p-4 rounded-lg ${msg.role === "AI" ? "bg-lime-100" : "bg-gray-100"}`}>
+                <p className="text-sm font-medium">{msg.role === "AI" ? "AI" : "You"}</p>
+                <p className="mt-1 whitespace-pre-wrap">{msg.content}</p>
               </div>
             ))}
+            {isLoading && (
+              <div className="p-4 rounded-lg bg-lime-100">
+                <p className="text-sm font-medium">AI</p>
+                <p className="mt-1">답변을 생성하는 중...</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Input Area */}
         <div className="border-t p-4">
           <div className="max-w-3xl mx-auto flex gap-4">
-            <Button variant="outline" size="icon" onClick={() => setMessages([])}>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => setMessages([])}
+              disabled={isLoading}
+            >
               <RefreshCw className="w-4 h-4" />
             </Button>
 
@@ -126,10 +180,15 @@ export default function Chat() {
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Send a message"
+                placeholder="메시지를 입력하세요"
                 className="min-h-[50px]"
+                disabled={isLoading}
               />
-              <Button className="bg-lime-400 hover:bg-lime-500" onClick={handleSendMessage}>
+              <Button 
+                className="bg-lime-400 hover:bg-lime-500" 
+                onClick={handleSendMessage}
+                disabled={isLoading}
+              >
                 <Send className="w-4 h-4" />
               </Button>
             </div>
