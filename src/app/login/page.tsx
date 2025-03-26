@@ -23,7 +23,30 @@ export default function LogIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    //로그인 요청
+    /* 테스트용 로그인 (실제 API 호출 대신 사용)
+    try {
+      // 테스트용 사용자 정보
+      const testUser = {
+        id: "1",
+        email: email,
+        name: "테스트 사용자"
+      }
+      
+      // 테스트용 토큰
+      const testToken = "test_token_" + Date.now()
+      
+      // 로그인 처리
+      login(testToken, testUser)
+      
+      alert("로그인에 성공했습니다.")
+      router.push("/writeResume")
+    } catch (error) {
+      console.error("로그인 오류:", error)
+      alert("로그인에 실패했습니다. 다시 시도해주세요.")
+    }
+    */
+
+    // 기존 로그인 코드
     try{
       const response = await fetch(`${API_URL}/login`, {   
         method: "POST",
