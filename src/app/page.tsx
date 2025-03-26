@@ -3,13 +3,13 @@
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "../contexts/AuthContext"
+import { useAuth, } from "../contexts/AuthContext"
 import { useState, useEffect } from "react";
 
 export default function Home() {
   const router = useRouter()
-  const { isLoggedIn, logout } = useAuth()
-
+  const { logout, isLoggedIn } = useAuth()
+  
   const [typedText, setTypedText] = useState("")
   const [typedSubText, setTypedSubText] = useState("")
   const [index, setIndex] = useState(0)
@@ -53,7 +53,9 @@ export default function Home() {
   }
 
   const handleLogout = () => {
+    console.log("Logging out...")
     logout()
+    console.log("After logout:", { isLoggedIn })
     router.push("/")
   }
 
@@ -81,7 +83,7 @@ export default function Home() {
       </nav>
 
       <main className="container flex flex-col items-center justify-center min-h-screen px-4 text-center">
-        <div className="bg-[url(/Gradients.png)] bg-center relative w-full h-screen flex items-center justify-start">
+        <div className="absolute inset-0 bg-[url(/Gradients.png)] bg-center bg-cover opacity-50">
           <div className="relative z-10 space-y-8 flex flex-col items-start justify-center h-full ml-80 mb-10">
             <div className="flex items-center space-x-2">
               <img src="/Vector.png" alt="icon" className="w-8 h-8 md:h-12 md:w-12 mt-[-14px]"/>
