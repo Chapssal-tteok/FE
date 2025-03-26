@@ -72,7 +72,7 @@ export default function LogIn() {
                 id="email" 
                 type="email" 
                 value={email} 
-                className="invalid:border-red-300 invalid:text-red-400 focus:invalid:border-red-400 focus:invalid:outline-red-400 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none"
+                className="invalid:border-red-500 invalid:text-red-400 focus:invalid:border-red-500 focus:invalid:outline-red-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none"
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
               />
