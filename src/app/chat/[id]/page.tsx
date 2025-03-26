@@ -7,9 +7,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
 import { FilePen, UserCircle2, LogOut, RefreshCw, Send } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
+import { analyzeResume, getChatResponse } from "@/services/openaiService"
+
 
 export default function Chat() {
-  const resume_id = useParams().id
+  const resume_id = useParams().id as string
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -31,29 +33,16 @@ export default function Chat() {
         const resumeData = await resumeResponse.json()
 
         // ChatGPT에 자기소개서 분석 요청
-        const analysisResponse = await fetch(`${API_URL}/analyze`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            resume: resumeData.content,
-            company: resumeData.company,
-            position: resumeData.position
-          })
-        })
-
-        if(!analysisResponse.ok) {
-          throw new Error("Failed to analyze resume")
-        }
-
-        const analysisData = await analysisResponse.json()
+        const feedback = await analyzeResume(
+          resumeData.content,
+          resumeData.company,
+          resumeData.position
+        )
         
         // 초기 메시지 설정
         setMessages([
           { role: "AI", content: "안녕하세요! 자기소개서 분석을 도와드리겠습니다." },
-          { role: "AI", content: analysisData.feedback }
+          { role: "AI", content: feedback || "자기소개서 분석이 완료되었습니다." }
         ])
       } catch (error) {
         console.error("Error fetching feedback", error)
@@ -76,27 +65,16 @@ export default function Chat() {
 
     try {
       setIsLoading(true)
-      const response = await fetch(`${API_URL}/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          message,
-          resume_id,
-          conversation_history: messages
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to get response from AI")
+      const resumeResponse = await fetch(`${API_URL}/resumes/${resume_id}`)
+      if(!resumeResponse.ok) {
+        throw new Error("Failed to fetch resume data")
       }
+      const resumeData = await resumeResponse.json()
 
-      const data = await response.json()
+      const reply = await getChatResponse(message, messages, resumeData.content)
       setMessages((prev) => [...prev, 
         { role: "user", content: message },
-        { role: "AI", content: data.reply }])
+        { role: "AI", content: reply || "죄송합니다. 응답을 생성할 수 없습니다." }])
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
