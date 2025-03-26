@@ -83,7 +83,7 @@ export default function SignUp() {
                 id="email" 
                 type="email" 
                 value={email}
-                className="invalid:border-pink-500 invalid:text-pink-500 focus:invalid:border-pink-500 focus:invalid:outline-pink-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none dark:disabled:border-gray-700 dark:disabled:bg-gray-800/20" 
+                className="invalid:border-red-500 invalid:text-red-400 focus:invalid:border-red-500 focus:invalid:outline-red-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none dark:disabled:border-gray-700 dark:disabled:bg-gray-800/20" 
                 onChange={(e) => setEmail(e.target.value)}
                 required 
               />
