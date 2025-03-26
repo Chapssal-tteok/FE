@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
 
 interface Resume {
   id: string
@@ -35,6 +36,7 @@ export default function ResumePage() {
     }
   }, [isLoggedIn, resume_id, router])
 
+  // 작성한 자기소개서 가져오기
   const fetchResume = async (resume_id: string) => {
     try {
       const response = await fetch(`${API_URL}/resume/${resume_id}`)
@@ -62,8 +64,10 @@ export default function ResumePage() {
       </div>
 
       <div className="mt-4 flex gap-2">
-        <Button variant="outline" className="text-lime-500" onClick={() => router.back()}>Back</Button>
-        <Button className="bg-lime-400 hover:bg-lime-500" onClick={() => router.push(`/chat/${resume_id}`)}>Get Feedback</Button>
+        <Button variant="ghost" className="text-lime-500" onClick={() => router.back()}>
+          <ArrowLeft className="w-6 h-6" />
+          </Button>
+        <Button className="bg-lime-400 hover:bg-lime-500" onClick={() => router.push(`/chat/${resume_id}`)}>피드백 받기</Button>
     </div>
     </div>
   )
