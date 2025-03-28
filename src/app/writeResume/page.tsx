@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { PlusCircle, ArrowLeft, MinusCircle } from "lucide-react"
+import { PlusCircle, MinusCircle } from "lucide-react"
 import Link from "next/link"
 
 
@@ -88,16 +88,17 @@ export default function NewResume() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-200 to-white p-4">
-      <h1 className="text-2xl font-bold">PreView</h1>
+    <div className="min-h-screen bg-gradient-to-br from-lime-100 to-white p-4">
+      <div className="flex items-center">
+        <Link href="/" className="text-2xl font-bold">
+          <div className="flex items-center">
+            <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
+            <span className="ml-1">PreView</span>
+          </div>
+        </Link>
+      </div>
 
       <div className="container max-w-4xl mx-auto">
-        <Link href="/" className="inline-block mb-4">
-          <Button variant="ghost" className="p-2">
-            <ArrowLeft className="w-6 h-6" />
-          </Button>
-        </Link>
-
         <Card>
           <CardContent className="p-6">
 
@@ -105,11 +106,17 @@ export default function NewResume() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="company">회사명</Label>
-                  <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} required />
+                  <Input id="company" 
+                  value={company} 
+                  onChange={(e) => setCompany(e.target.value)} 
+                  required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="position">지원 직무</Label>
-                  <Input id="position" value={position} onChange={(e) => setPosition(e.target.value)} required />
+                  <Input id="position" 
+                  value={position} 
+                  onChange={(e) => setPosition(e.target.value)} 
+                  required />
                 </div>
               </div>
 
@@ -117,7 +124,7 @@ export default function NewResume() {
                 <h3 className="text-lg font-semibold">자기소개서 문항</h3>
 
                 {questions.map((q, index) => (
-                  <div key={q.id} className="space-y-2 p-4 bg-green-50 rounded-lg">
+                  <div key={q.id} className="space-y-2 p-4 bg-lime-50 rounded-lg">
                     <Label htmlFor={`question-${q.id}`}>문항 {index + 1}</Label>
 
                     <Input
@@ -145,13 +152,13 @@ export default function NewResume() {
                     />
 
                   {/*문항 추가, 삭제 버튼*/}
-                  <Button type="button" variant="outline" onClick={addQuestion} className="text-lime-600">
-                    <PlusCircle className="w-4 h-4 mr-2" />
+                  <Button type="button" variant="outline" onClick={addQuestion} className="text-lime-600 mr-1">
+                    <PlusCircle className="w-4 h-4" />
                     문항 추가
                   </Button>
 
-                  <Button type="button" variant="outline" onClick={() => deleteQuestion(q.id)} className="text-red-400">
-                    <MinusCircle className="w-4 h-4 mr-2" />
+                  <Button type="button" variant="outline" onClick={() => deleteQuestion(q.id)} className="text-red-500">
+                    <MinusCircle className="w-4 h-4" />
                     문항 삭제
                   </Button>
                 </div>

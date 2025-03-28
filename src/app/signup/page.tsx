@@ -64,9 +64,12 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white p-4">
-      <Link href="/" className="absolute top-4 left-4">
-        <h1 className="text-2xl font-bold">PreView</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-lime-50 to-white p-4">
+      <Link href="/" className="absolute top-4 left-4 text-2xl font-bold">
+        <div className="flex items-center">
+          <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
+          <span className="ml-1">PreView</span>
+        </div>
       </Link>
 
       <Card className="w-full max-w-md">
@@ -82,8 +85,7 @@ export default function SignUp() {
               <Input 
                 id="email" 
                 type="email" 
-                value={email}
-                className="invalid:border-red-500 invalid:text-red-400 focus:invalid:border-red-500 focus:invalid:outline-red-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none dark:disabled:border-gray-700 dark:disabled:bg-gray-800/20" 
+                value={email}                 
                 onChange={(e) => setEmail(e.target.value)}
                 required 
               />
@@ -121,7 +123,6 @@ export default function SignUp() {
               ) : confirmPassword.length > 0 && password === confirmPassword ? (
                 <p className="text-green-500 text-xs">✅ 비밀번호가 일치합니다.</p>
               ) : null}
- 
             </div>
 
             {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
