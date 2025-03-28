@@ -51,7 +51,7 @@ export function PasswordChangeDialog({ isOpen, onOpenChange, onSubmit }: Passwor
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="currentPassword">현재 비밀번호</Label>
               <Input
                 id="currentPassword"
@@ -61,7 +61,7 @@ export function PasswordChangeDialog({ isOpen, onOpenChange, onSubmit }: Passwor
                 required
               />
             </div>
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="newPassword">새 비밀번호</Label>
               <Input
                 id="newPassword"
@@ -71,7 +71,7 @@ export function PasswordChangeDialog({ isOpen, onOpenChange, onSubmit }: Passwor
                 required
               />
             </div>
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="confirmNewPassword">새 비밀번호 확인</Label>
               <Input
                 id="confirmNewPassword"
@@ -84,7 +84,7 @@ export function PasswordChangeDialog({ isOpen, onOpenChange, onSubmit }: Passwor
             {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
           </div>
           <DialogFooter className="mt-4">
-            <Button type="submit">변경</Button>
+            <Button type="submit" className="shadow bg-white text-lime-600 hover:bg-lime-400 hover:text-white">변경</Button>
           </DialogFooter>
         </form>
       </DialogContent>

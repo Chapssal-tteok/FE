@@ -27,7 +27,7 @@ export function InterviewList({ interviews, onDelete }: InterviewListProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>면접 기록</CardTitle>
+        <CardTitle>나의 면접 기록</CardTitle>
       </CardHeader>
       <CardContent>
         <ul className="space-y-2">
@@ -50,8 +50,8 @@ export function InterviewList({ interviews, onDelete }: InterviewListProps) {
           ))}
         </ul>
 
-        <div className="mt-4 text-center">
-          <Button variant="destructive" onClick={() => onDelete(selectedInterviews)}>
+        <div className="mt-8 text-right">
+          <Button className="shadow bg-white text-red-600 hover:bg-red-400 hover:text-white" onClick={() => onDelete(selectedInterviews)}>
             삭제
           </Button>
         </div>

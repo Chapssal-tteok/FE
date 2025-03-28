@@ -27,7 +27,7 @@ export function ResumeList({ resumes, onDelete }: ResumeListProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>내 자기소개서</CardTitle>
+        <CardTitle>나의 자기소개서</CardTitle>
       </CardHeader>
       <CardContent>
         <ul className="space-y-2">
@@ -53,14 +53,11 @@ export function ResumeList({ resumes, onDelete }: ResumeListProps) {
           ))}
         </ul>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-right space-x-2">
           <Link href="/writeResume">
-            <Button className="bg-lime-400 hover:bg-lime-500">새 자기소개서 작성</Button>
+            <Button className="shadow bg-white text-lime-500 hover:bg-lime-400 hover:text-white">새 자기소개서 작성</Button>
           </Link>
-        </div>
-
-        <div className="mt-4 text-center">
-          <Button variant="destructive" onClick={() => onDelete(selectedResumes)}>
+          <Button className="shadow bg-white text-red-600 hover:bg-red-400 hover:text-white" onClick={() => onDelete(selectedResumes)}>
             삭제
           </Button>
         </div>
