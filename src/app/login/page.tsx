@@ -23,7 +23,7 @@ export default function LogIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    /* 테스트용 로그인 (실제 API 호출 대신 사용)
+    // 테스트용 로그인 (실제 API 호출 대신 사용)
     try {
       // 테스트용 사용자 정보
       const testUser = {
@@ -44,9 +44,8 @@ export default function LogIn() {
       console.error("로그인 오류:", error)
       alert("로그인에 실패했습니다. 다시 시도해주세요.")
     }
-    */
 
-    // 기존 로그인 코드
+    /*// 기존 로그인 코드
     try{
       const response = await fetch(`${API_URL}/login`, {   
         method: "POST",
@@ -70,14 +69,16 @@ export default function LogIn() {
     } catch (error) {
       console.error("로그인 오류:", error)
       alert("로그인에 실패했습니다. 다시 시도해주세요.")
-    }
+    }*/
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-white p-4">
-
-      <Link href="/" className="absolute top-4 left-4">
-        <h1 className="text-2xl font-bold">PreView</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-lime-50 to-white p-4">
+      <Link href="/" className="absolute top-4 left-4 text-2xl font-bold">
+      <div className="flex items-center">
+        <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
+        <span className="ml-1">PreView</span>
+      </div>
       </Link>
 
       <Card className="w-full max-w-md">
@@ -95,7 +96,6 @@ export default function LogIn() {
                 id="email" 
                 type="email" 
                 value={email} 
-                className="invalid:border-red-500 invalid:text-red-400 focus:invalid:border-red-500 focus:invalid:outline-red-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none"
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
               />
