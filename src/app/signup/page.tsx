@@ -65,18 +65,18 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white p-4 relative">
-      <div className="absolute inset-0 bg-[url(/Gradients.png)] bg-center bg-cover opacity-30 z-0"></div>
+      <div className="absolute inset-0 bg-[url(/Gradients.svg)] bg-center bg-cover opacity-30 z-0"></div>
       
       <Link href="/" className="absolute top-8 left-1/2 -translate-x-1/2 text-2xl font-bold z-10">
         <div className="flex items-center">
-          <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="mb-1" />
+          <Image src="/logo.svg" alt="PreView Logo" width={20} height={20} className="mb-1 mt-[-2px]" />
           <span className="ml-1">PreView</span>
         </div>
       </Link>
 
       <div className="relative z-10 w-full max-w-2xl bg-[#DEFFCF]/40 backdrop-blur-xs rounded-3xl p-8">
         <div className="flex justify-center mb-8">
-          <h1 className="text-3xl px-1 py-0.5 bg-[#B9FF66]/80 rounded-md text-black">Sign Up</h1>
+          <h1 className="text-3xl px-1 py-0.5 bg-light-green/80 rounded-md text-black">Sign Up</h1>
         </div>
 
         <div className="max-w-md mx-auto">

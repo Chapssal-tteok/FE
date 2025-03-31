@@ -61,11 +61,12 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <nav className="absolute top-0 w-full p-4 z-50">
+      <div className="absolute inset-0 bg-[url(/Gradients.svg)] bg-center bg-cover opacity-50 z-0"></div>
+      <header className="absolute top-0 w-full p-4 z-50">
         <div className="container flex justify-between items-center mx-auto px-4">
           <Link href="/" className="text-2xl font-bold">
             <div className="flex items-center">
-              <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="mb-1" />
+              <Image src="/logo.svg" alt="PreView Logo" width={20} height={20} className="mb-1 mt-[-2px]" />
               <span className="ml-1">PreView</span>
             </div>
           </Link>
@@ -83,27 +84,28 @@ export default function Home() {
             </div>
           ) : (
             <Link href="/login">
-              <Button variant="outline">Login</Button>
+              <Button variant="outline">Sign In</Button>
             </Link>         
           )}
         </div>
-      </nav>  
+      </header>  
 
       <main className="container flex flex-col items-center justify-center min-h-screen px-4 text-center">
-        <div className="absolute inset-0 bg-[url(/Gradients.png)] bg-center bg-cover opacity-50 z-0"></div>
-        <div className="relative z-10 space-y-8 flex flex-col items-start justify-center h-full mr-180 mb-10">
+        <div className="relative z-10 space-y-12 flex flex-col items-start justify-center h-full mr-180 mb-10">
           <div className="flex items-center space-x-2">
-            <Image src="/Vector.png" alt="icon" width={20} height={20} className="w-8 h-8 md:h-12 md:w-12 mt-[-14px]"/>
+            <Image src="/logo.svg" alt="icon" width={20} height={20} className="w-8 h-8 md:h-12 md:w-12 mt-[-14px]"/>
             <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl relative inline-block">
-              {typedText}
-              {index < text.length && !cursorInSubText && (
-                <span className="absolute w-[2px] h-full bg-black animate-blink"></span>
+              <span className="invisible">{text}</span>
+              <span className="absolute top-0 left-0">{typedText}</span>
+              {index < text.length && (
+                <span className="absolute w-[2px] h-full bg-black animate-blink" style={{ left: `${index * 0.6}em` }}></span>
               )}
             </h1>
           </div>
 
-          <h2 className="text-2xl leading-tight text-left">
-            <span dangerouslySetInnerHTML={{ __html: typedSubText.replace(/\n/g, "<br />") }} />
+          <h2 className="text-2xl leading-tight text-left relative">
+            <span className="invisible">{subText}</span>
+            <span className="absolute top-0 left-0" dangerouslySetInnerHTML={{ __html: typedSubText.replace(/\n/g, "<br />") }} />
           </h2>
 
           <Button className="text-2xl px-8 py-7 rounded-3xl shadow-xl shadow-black-500/50 text-black bg-light-green hover:bg-lime-400" 

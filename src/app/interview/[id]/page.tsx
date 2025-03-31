@@ -249,13 +249,13 @@ export default function Interview() {
   return (
     <div className="min-h-screen bg-white">
       {/* Sidebar */}
-      <div className={`${isSidebarOpen ? 'w-[240px]' : 'w-[60px]'} bg-white shadow-lg fixed h-screen z-50 transition-all duration-300`}>
+      <div className={`${isSidebarOpen ? 'w-[240px]' : 'w-[60px]'} bg-gray-100/20 shadow-lg fixed h-screen z-50 transition-all duration-300`}>
         <div className="flex justify-between items-center p-4 border-b">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="hover:bg-gray-100"
+            className="hover:bg-[#DEFFCF]/40"
           >
             <Menu className="w-7 h-7" />
           </Button>
@@ -265,7 +265,7 @@ export default function Interview() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-gray-100"
+                className="hover:bg-[#DEFFCF]/40"
               >
                 <FilePen className="w-7 h-7" />
               </Button>
@@ -279,8 +279,8 @@ export default function Interview() {
               <div className="space-y-2">
                 {sampleInterviewHistory.map((interview) => (
                   <Link key={interview.id} href={`/interview/${interview.id}`}>
-                    <div className={`p-3 hover:bg-gray-100 rounded-lg cursor-pointer ${
-                      interview.id === interview_id ? 'bg-gray-100 font-bold' : ''
+                    <div className={`p-3 hover:bg-[#DEFFCF]/40 rounded-lg cursor-pointer ${
+                      interview.id === interview_id ? 'bg-[#DEFFCF] font-bold' : ''
                     }`}>
                       <p className="font-medium text-sm">{interview.company}/{interview.position}</p>
                       <p className="text-xs text-gray-500">{interview.date}</p>
@@ -293,13 +293,13 @@ export default function Interview() {
             <div className="absolute bottom-0 w-full p-4 border-t">
               <div className="space-y-2">
                 <Link href="/mypage">
-                  <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-black hover:bg-gray-100">
+                  <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-black hover:bg-[#DEFFCF]/40">
                     <UserCircle2 className="w-5 h-5 mr-3" />
                     My Page
                   </Button>
                 </Link>
                 
-                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-gray-600 hover:text-black hover:bg-gray-100">
+                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-gray-600 hover:text-black hover:bg-[#DEFFCF]/40">
                   <LogOut className="w-5 h-5 mr-3" />
                   Log out
                 </Button>
@@ -320,7 +320,7 @@ export default function Interview() {
                 type="button"
                 onClick={toggleVoiceMode}
                 variant="outline"
-                className="rounded-full px-4 py-2 flex items-center gap-2 text-sm"
+                className="rounded-full px-4 py-2 flex items-center gap-2 text-sm hover:bg-[#DEFFCF]/40"
                 >
                 {isVoiceMode ? (
                   <>
@@ -340,7 +340,7 @@ export default function Interview() {
                   onClick={isListening ? stopListening : startListening}
                   disabled={isLoading}
                   variant={isListening ? "default" : "outline"}
-                  className="rounded-full px-4 py-2 flex items-center gap-2 text-sm"
+                  className="rounded-full px-4 py-2 flex items-center gap-2 text-sm hover:bg-[#DEFFCF]/40"
                 >
                   <Mic className="w-4 h-4" />
                   {isListening ? "녹음 중지" : "음성 녹음"}
@@ -357,7 +357,7 @@ export default function Interview() {
               <div key={q._id} className="space-y-4">
                 {/* 질문 */}
                 <div className="flex justify-start">
-                  <div className="relative max-w-[80%] bg-gray-100 rounded-2xl">
+                  <div className="relative max-w-[80%] bg-[#DEFFCF]/40 rounded-2xl">
                     <div className="p-4">
                       <p className="font-medium mb-1">Q{index + 1}:</p>
                       <p className="whitespace-pre-wrap">{q.question}</p>
@@ -379,11 +379,11 @@ export default function Interview() {
                 {/* 피드백 */}
                 {q.feedback && (
                   <div className="flex justify-center">
-                    <div className="w-[90%] bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                    <div className="w-[90%] bg-white border-2 border-[#DEFFCF] rounded-xl shadow-sm">
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <p className="font-semibold text-gray-700">면접관 피드백</p>
-                          <div className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+                          <div className="px-3 py-1 bg-[#DEFFCF] rounded-full text-sm text-gray-600">
                             Q{index + 1}
                           </div>
                         </div>
@@ -396,7 +396,7 @@ export default function Interview() {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="relative max-w-[80%] bg-gray-100 rounded-2xl">
+                <div className="relative max-w-[80%] bg-[#DEFFCF] rounded-2xl">
                   <div className="p-4">
                     <p>처리 중...</p>
                   </div>
@@ -415,8 +415,8 @@ export default function Interview() {
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="답변을 입력하세요..."
-                  className="h-[100px] resize-none overflow-y-auto bg-gray-100 border-0 rounded-2xl"
+                  placeholder="답변을 입력하세요"
+                  className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
                   disabled={isLoading || isListening}
                 />
                 <div className="flex flex-col gap-3">

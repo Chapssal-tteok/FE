@@ -140,13 +140,13 @@ export default function Chat() {
   return (
     <div className="min-h-screen bg-white">
       {/* Sidebar */}
-      <div className={`${isSidebarOpen ? 'w-[240px]' : 'w-[60px]'} bg-white shadow-lg fixed h-screen z-50 transition-all duration-300`}>
+      <div className={`${isSidebarOpen ? 'w-[240px]' : 'w-[60px]'} bg-gray-100/20 shadow-lg fixed h-screen z-50 transition-all duration-300`}>
         <div className="flex justify-between items-center p-4 border-b">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="hover:bg-gray-100"
+            className="hover:bg-[#DEFFCF]/40"
           >
             <Menu className="w-7 h-7" />
           </Button>
@@ -156,7 +156,7 @@ export default function Chat() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-gray-100"
+                className="hover:bg-[#DEFFCF]/40"
               >
                 <FilePen className="w-7 h-7" />
               </Button>
@@ -170,8 +170,8 @@ export default function Chat() {
               <div className="space-y-2">
                 {sampleFeedbackHistory.map((feedback) => (
                   <Link key={feedback.id} href={`/chat/${feedback.id}`}>
-                    <div className={`p-3 hover:bg-gray-100 rounded-lg cursor-pointer ${
-                      feedback.id === resume_id ? 'bg-gray-100 font-bold' : ''
+                    <div className={`p-3 hover:bg-[#DEFFCF]/40 rounded-lg cursor-pointer ${
+                      feedback.id === resume_id ? 'bg-[#DEFFCF] font-bold' : ''
                     }`}>
                       <p className="font-medium text-sm">{feedback.company}/{feedback.position}</p>
                       <p className="text-xs text-gray-500">{feedback.date}</p>
@@ -184,13 +184,13 @@ export default function Chat() {
             <div className="absolute bottom-0 w-full p-4">
               <div className="space-y-2">
                 <Link href="/mypage">
-                  <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-black hover:bg-gray-100">
+                  <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-black hover:bg-[#DEFFCF]/40">
                     <UserCircle2 className="w-5 h-5 mr-3" />
                     My Page
                   </Button>
                 </Link>
                 
-                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-gray-600 hover:text-black hover:bg-gray-100">
+                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-gray-600 hover:text-black hover:bg-[#DEFFCF]/40">
                   <LogOut className="w-5 h-5 mr-3" />
                   Log out
                 </Button>
@@ -216,12 +216,12 @@ export default function Chat() {
               <div key={idx} className={`flex ${msg.role === "AI" ? "justify-start" : "justify-end"}`}>
                 <div className={`relative max-w-[80%] ${
                   msg.role === "AI" 
-                    ? "bg-gray-100" 
+                    ? "bg-[#DEFFCF]/40" 
                     : "bg-lime-300"
                 } rounded-2xl`}>
                   {msg.role === "AI" && (
                     <div className="absolute -left-10 top-2">
-                      <Bot className="w-6 h-6 text-gray-600" />
+                      <Bot className="w-6 h-6 text-lime-600" />
                     </div>
                   )}
                   <div className="p-4">
@@ -234,7 +234,7 @@ export default function Chat() {
                         size="icon" 
                         onClick={() => setMessages([])}
                         disabled={isLoading}
-                        className="h-6 w-6 hover:bg-gray-200"
+                        className="h-6 w-6 hover:bg-[#DEFFCF]"
                       >
                         <RefreshCw className="w-3 h-3" />
                       </Button>
@@ -268,7 +268,7 @@ export default function Chat() {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder="궁금한 점을 물어보세요"
-                className="h-[100px] resize-none overflow-y-auto bg-gray-100 border-0 rounded-2xl"
+                className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
                 disabled={isLoading}
               />
               <div className="flex flex-col gap-3">

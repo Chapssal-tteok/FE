@@ -167,11 +167,11 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lime-50 to-white p-4">
-      <nav className="absolute top-0 w-full p-4 z-50">
-        <div className="container flex justify-between items-center mx-auto px-4">
+      <header className="absolute top-0 w-full p-4 z-10">
+        <div className="flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold">
             <div className="flex items-center">
-              <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1" />
+              <Image src="/logo.svg" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1 mt-[-2px]" />
               <span className="ml-1">PreView</span>
             </div>
           </Link>
@@ -179,7 +179,7 @@ export default function MyPage() {
             <Button variant="outline" onClick={handleLogout}>Log out</Button>
           </div>
         </div>
-      </nav>
+      </header>
       
       <div className="container max-w-4xl mx-auto mt-8">
         <h1 className="text-2xl font-bold mb-6">My Page</h1>
@@ -202,7 +202,7 @@ export default function MyPage() {
               <Button 
                 variant="outline" 
                 onClick={() => setIsPasswordDialogOpen(true)}
-                className="text-lime-500 hover:bg-lime-50"
+                className="text-lime-500 hover:bg-lime-50 "
               >
                 비밀번호 변경
               </Button>
