@@ -10,7 +10,7 @@ import { PasswordChangeDialog } from "@/components/mypage/PasswordChangeDialog"
 import { AccountDeleteDialog } from "@/components/mypage/AccountDeleteDialog"
 import { DeleteAllRecordsDialog } from "@/components/mypage/DeleteAllRecordsDialog"
 import Link from "next/link"
-
+import Image from "next/image"
 interface Resume {
   id: string
   company: string
@@ -171,7 +171,7 @@ export default function MyPage() {
         <div className="container flex justify-between items-center mx-auto px-4">
           <Link href="/" className="text-2xl font-bold">
             <div className="flex items-center">
-              <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
+              <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1" />
               <span className="ml-1">PreView</span>
             </div>
           </Link>

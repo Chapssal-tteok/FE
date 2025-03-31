@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
 
 export default function SignUp() {
   const [email, setEmail] = useState("")
@@ -64,41 +64,46 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-lime-50 to-white p-4">
-      <Link href="/" className="absolute top-4 left-4 text-2xl font-bold">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 relative">
+      <div className="absolute inset-0 bg-[url(/Gradients.png)] bg-center bg-cover opacity-30 z-0"></div>
+      
+      <Link href="/" className="absolute top-8 left-1/2 -translate-x-1/2 text-2xl font-bold z-10">
         <div className="flex items-center">
-          <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
+          <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="mb-1" />
           <span className="ml-1">PreView</span>
         </div>
       </Link>
 
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl text-center">Sign Up</CardTitle>
-        </CardHeader>
+      <div className="relative z-10 w-full max-w-2xl bg-[#DEFFCF]/40 backdrop-blur-xs rounded-3xl p-8">
+        <div className="flex justify-center mb-8">
+          <h1 className="text-3xl px-1 py-0.5 bg-[#B9FF66]/80 rounded-md text-black">Sign Up</h1>
+        </div>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail*</Label>
+        <div className="max-w-md mx-auto">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-sm">E-mail*</Label>
               <Input 
                 id="email" 
                 type="email" 
                 value={email}                 
                 onChange={(e) => setEmail(e.target.value)}
                 required 
+                className="rounded-lg border-gray-300 bg-white"
+                placeholder="E-mail"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password*</Label>
+            <div className="relative space-y-1">
+              <Label htmlFor="password" className="text-sm">Password*</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="rounded-lg border-gray-300 bg-white pr-10"
+                placeholder="Password"
               />
 
               {!validatePassword(password) && password.length > 0 && (
@@ -108,14 +113,16 @@ export default function SignUp() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password*</Label>
+            <div className="relative space-y-1">
+              <Label htmlFor="confirmPassword" className="text-sm">Confirm Password*</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                className="rounded-lg border-gray-300 bg-white pr-10"
+                placeholder="Confirm Password"
               />
 
               {confirmPassword.length > 0 && password !== confirmPassword ? (
@@ -127,19 +134,24 @@ export default function SignUp() {
 
             {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
 
-            <Button  type="submit" className="bg-lime-400 hover:bg-lime-500 disabled:{!validatePassword(password) || password !== confirmPassword} w-full">
+            <div className="mt-6 text-center text-sm">
+              Already have an account?{" "}
+              <Link href="/login" className="text-black font-semibold hover:underline">
+                Sign In
+              </Link>
+            </div>
+
+            <Button  
+              type="submit" 
+              className="w-full bg-[#1A1A1A] hover:bg-[#333333] text-white rounded-lg py-6 disabled:{!validatePassword(password) || password !== confirmPassword}">
               Sign Up
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
-            <Link href="/login" className="text-green-600 hover:underline">
-              Login
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+          
+
+        </div>
+      </div>
     </div>
   )
 }

@@ -7,9 +7,9 @@ import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../../contexts/AuthContext"
+import Image from "next/image"
 
 export default function LogIn() {
   const [email, setEmail] = useState("")
@@ -73,66 +73,72 @@ export default function LogIn() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-lime-50 to-white p-4">
-      <Link href="/" className="absolute top-4 left-4 text-2xl font-bold">
-      <div className="flex items-center">
-        <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
-        <span className="ml-1">PreView</span>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 relative">
+      <div className="absolute inset-0 bg-[url(/Gradients.png)] bg-center bg-cover opacity-30 z-0"></div>
+      
+      <Link href="/" className="absolute top-8 left-1/2 -translate-x-1/2 text-2xl font-bold z-10">
+        <div className="flex items-center">
+          <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="mb-1" />
+          <span className="ml-1">PreView</span>
+        </div>
       </Link>
 
-      <Card className="w-full max-w-md">
+      <div className="relative z-10 w-full max-w-2xl bg-[#DEFFCF]/40 backdrop-blur-xs rounded-3xl p-8">
+        <div className="flex justify-center mb-8">
+          <h1 className="text-3xl px-1 py-0.5 bg-[#B9FF66]/80 rounded-md text-black">Sign In</h1>
+        </div>
 
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl text-center">Login</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail*</Label>
+        <div className="max-w-md mx-auto">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-sm">E-mail*</Label>
               <Input 
                 id="email" 
                 type="email" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
+                className="rounded-lg border-gray-300 bg-white"
+                placeholder="E-mail"
               />
             </div>
 
-            <div className="relative space-y-2">
-              <Label htmlFor="password">Password*</Label>
+            <div className="relative space-y-1">
+              <Label htmlFor="password" className="text-sm">Password*</Label>
               <Input
                 id="password"
-                type={showPassword ? "text":"password"}
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="pr-10"
+                className="rounded-lg border-gray-300 bg-white pr-10"
+                placeholder="Password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/5 h-full flex items-center text-gray-600"
+                className="absolute right-4 top-[32px] text-gray-600"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
 
-            <Button type="submit" className="bg-lime-400 hover:bg-lime-500 w-full">
-              Login
+            <div className="mt-6 text-center text-sm">
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-black font-semibold hover:underline">
+                Sign Up
+              </Link>
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full bg-[#1A1A1A] hover:bg-[#333333] text-white rounded-lg py-6"
+            >
+              Sign In
             </Button>
           </form>
-
-          <div className="mt-4 text-center text-sm">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-green-600 hover:underline">
-              Sign Up
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlusCircle, MinusCircle } from "lucide-react"
 import Link from "next/link"
-
+import Image from "next/image"
 
 interface Question {
   id: number
@@ -92,7 +92,7 @@ export default function NewResume() {
       <div className="flex items-center">
         <Link href="/" className="text-2xl font-bold">
           <div className="flex items-center">
-            <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
+            <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1" />
             <span className="ml-1">PreView</span>
           </div>
         </Link>

@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { FilePen, UserCircle2, LogOut, RefreshCw, Send, Bot, Activity } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { analyzeResume, getChatResponse } from "@/services/openaiService"
-
+import Image from "next/image"
 
 // 개발 환경용 샘플 데이터
 const sampleResumeData = {
@@ -138,7 +138,7 @@ export default function Chat() {
         <div className="p-4 border-b">
           <Link href="/" className="text-xl font-bold">
             <div className="flex items-center justify-center">
-              <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
+              <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1" />
               <span className="ml-1">PreView</span>
             </div>
           </Link>

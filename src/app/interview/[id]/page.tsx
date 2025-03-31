@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { FilePen, UserCircle2, LogOut, Send, Mic, MicOff, Volume2, FileInput } from "lucide-react"
 import Link from "next/link"
 import { Textarea } from "@/components/ui/textarea"
-
+import Image from "next/image"
 interface Question {
   _id: string
   question: string
@@ -245,7 +245,7 @@ export default function Interview() {
         <div className="p-4 border-b">
           <Link href="/" className="text-xl font-bold">
             <div className="flex items-center justify-center">
-              <img src="/Vector.png" alt="PreView Logo" className="w-5 h-5 mb-1" />
+              <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1" />
               <span className="ml-1">PreView</span>
             </div>
           </Link>
