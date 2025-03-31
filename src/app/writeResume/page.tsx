@@ -20,7 +20,7 @@ interface Question {
 }
 
 export default function NewResume() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, logout } = useAuth()
   const router = useRouter()
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -30,6 +30,13 @@ export default function NewResume() {
       router.push("/login")
     }
   }, [isLoggedIn, router])
+
+  const handleLogout = () => {
+    console.log("Logging out...")
+    logout()
+    console.log("After logout:", { isLoggedIn })
+    router.push("/")
+  }
 
   const [company, setCompany] = useState("")
   const [position, setPosition] = useState("")
@@ -88,20 +95,33 @@ export default function NewResume() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lime-100 to-white p-4">
-      <div className="flex items-center">
-        <Link href="/" className="text-2xl font-bold">
-          <div className="flex items-center">
-            <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1" />
-            <span className="ml-1">PreView</span>
+    <div className="relative min-h-screen overflow-hidden p-4">
+      <div className="absolute inset-0 bg-[url(/Gradients.svg)] bg-center bg-cover opacity-30 z-0"></div>
+      <header className="absolute top-0 w-full p-4 z-50">
+        <div className="flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold">
+            <div className="flex items-center">
+              <Image src="/logo.svg" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1 mt-[-2px]" />
+              <span className="ml-1">PreView</span>
+            </div>
+          </Link>
+
+          <div className="flex space-x-4 mr-8">
+            <Link href="/mypage">
+              <Button variant="outline">
+                My Page
+              </Button>
+            </Link>
+            <Button variant="outline" onClick={handleLogout}>
+              Log out
+            </Button>
           </div>
-        </Link>
-      </div>
+        </div>
+      </header>
 
-      <div className="container max-w-4xl mx-auto">
-        <Card>
-          <CardContent className="p-6">
-
+      <div className="container max-w-4xl mx-auto mt-15">
+        <Card className="bg-[#DEFFCF]/50 backdrop-blur-xs rounded-3xl">
+          <CardContent className="p-6 ">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -109,6 +129,7 @@ export default function NewResume() {
                   <Input id="company" 
                   value={company} 
                   onChange={(e) => setCompany(e.target.value)} 
+                  className="bg-white/80"
                   required />
                 </div>
                 <div className="space-y-2">
@@ -116,6 +137,7 @@ export default function NewResume() {
                   <Input id="position" 
                   value={position} 
                   onChange={(e) => setPosition(e.target.value)} 
+                  className="bg-white/80"
                   required />
                 </div>
               </div>
@@ -124,7 +146,7 @@ export default function NewResume() {
                 <h3 className="text-lg font-semibold">자기소개서 문항</h3>
 
                 {questions.map((q, index) => (
-                  <div key={q.id} className="space-y-2 p-4 bg-lime-50 rounded-lg">
+                  <div key={q.id} className="space-y-2 p-4 bg-white/70 rounded-lg">
                     <Label htmlFor={`question-${q.id}`}>문항 {index + 1}</Label>
 
                     <Input
@@ -135,6 +157,7 @@ export default function NewResume() {
                           item.id === q.id ? { ...item, question: e.target.value } : item)
                         setQuestions(newQuestions)
                       }}
+                      className="bg-white/80"
                       required
                     />
 
@@ -147,18 +170,18 @@ export default function NewResume() {
                           item.id === q.id ? { ...item, answer: e.target.value } : item)
                         setQuestions(newQuestions)
                       }}
-                      className="min-h-[100px]"
+                      className="min-h-[100px] bg-white/80"
                       required
                     />
 
                   {/*문항 추가, 삭제 버튼*/}
                   <Button type="button" variant="outline" onClick={addQuestion} className="text-lime-600 mr-1">
-                    <PlusCircle className="w-4 h-4" />
+                    <PlusCircle className="w-4 h-4 mt-[-2px]" />
                     문항 추가
                   </Button>
 
                   <Button type="button" variant="outline" onClick={() => deleteQuestion(q.id)} className="text-red-500">
-                    <MinusCircle className="w-4 h-4" />
+                    <MinusCircle className="w-4 h-4 mt-[-2px]" />
                     문항 삭제
                   </Button>
                 </div>
@@ -166,7 +189,7 @@ export default function NewResume() {
 
               </div>
 
-              <Button type="submit" className="w-full bg-lime-400 hover:bg-lime-500">
+              <Button type="submit" className="w-full text-black bg-lime-400 hover:bg-lime-500">
                 제출
               </Button>
             </form>
