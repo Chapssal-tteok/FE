@@ -111,6 +111,15 @@ export default function Home() {
             시작하기
           </Button>
         </div>
+
+        <div className="fixed bottom-8 right-8 flex space-x-4">
+          <a href="chacha09@ewha.ac.kr" className="hover:opacity-50 transition-opacity">
+            <Image src="/email-icon.svg" alt="Email" width={32} height={32} />
+          </a>
+          <a href="https://github.com/Chapssal-tteok" target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
+            <Image src="/github-icon.svg" alt="GitHub" width={32} height={32} />
+          </a>
+        </div>
       </main>
     </div>
   )

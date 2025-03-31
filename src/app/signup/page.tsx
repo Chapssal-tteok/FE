@@ -147,9 +147,6 @@ export default function SignUp() {
               Sign Up
             </Button>
           </form>
-
-          
-
         </div>
       </div>
     </div>

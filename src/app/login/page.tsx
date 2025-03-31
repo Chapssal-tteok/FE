@@ -39,7 +39,7 @@ export default function LogIn() {
       login(testToken, testUser)
       
       alert("로그인에 성공했습니다.")
-      router.push("/writeResume")
+      router.push("/")
     } catch (error) {
       console.error("로그인 오류:", error)
       alert("로그인에 실패했습니다. 다시 시도해주세요.")
@@ -64,7 +64,7 @@ export default function LogIn() {
 
       // 로그인 후 자소서 작성 페이지로 이동
       alert("로그인에 성공했습니다.")
-      router.push("/writeResume")
+      router.push("/")
 
     } catch (error) {
       console.error("로그인 오류:", error)

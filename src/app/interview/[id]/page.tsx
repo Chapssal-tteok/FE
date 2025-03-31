@@ -5,10 +5,11 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
-import { FilePen, UserCircle2, LogOut, Send, Mic, MicOff, Volume2, FileInput } from "lucide-react"
+import { FilePen, UserCircle2, LogOut, Send, Mic, MicOff, Volume2, Menu, File } from "lucide-react"
 import Link from "next/link"
 import { Textarea } from "@/components/ui/textarea"
-import Image from "next/image"
+
+
 interface Question {
   _id: string
   question: string
@@ -21,6 +22,13 @@ interface Interview {
   questions: Question[]
   currentQuestionIndex: number
 }
+
+// 샘플 인터뷰 기록 데이터 추가
+const sampleInterviewHistory = [
+  { id: "1", company: "네이버", position: "프론트엔드 개발자", date: "2024.03.20" },
+  { id: "2", company: "카카오", position: "백엔드 개발자", date: "2024.03.19" },
+  { id: "3", company: "라인", position: "풀스택 개발자", date: "2024.03.18" },
+]
 
 export default function Interview() {
   const interview_id = useParams().id as string
@@ -35,6 +43,7 @@ export default function Interview() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY
@@ -238,93 +247,159 @@ export default function Interview() {
   const currentQuestion = interview.questions[interview.currentQuestionIndex]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lime-50 to-white flex">
-      
+    <div className="min-h-screen bg-white">
       {/* Sidebar */}
-      <div className="w-54 shadow bg-lime-100 border-r fixed h-screen">
-        <div className="p-4 border-b">
-          <Link href="/" className="text-xl font-bold">
-            <div className="flex items-center justify-center">
-              <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1" />
-              <span className="ml-1">PreView</span>
-            </div>
-          </Link>
-        </div>
-        <div className="p-4">
-          <div className="space-y-4">
+      <div className={`${isSidebarOpen ? 'w-[240px]' : 'w-[60px]'} bg-white shadow-lg fixed h-screen z-50 transition-all duration-300`}>
+        <div className="flex justify-between items-center p-4 border-b">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="hover:bg-gray-100"
+          >
+            <Menu className="w-7 h-7" />
+          </Button>
+          
+          {isSidebarOpen && (
             <Link href="/writeResume">
-              <Button variant="ghost" className="w-full justify-start hover:bg-lime-200">
-                <FilePen className="w-4 h-4 mr-2" />
-                New Resume
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-gray-100"
+              >
+                <FilePen className="w-7 h-7" />
               </Button>
             </Link>
-            
-            {/* 링크 수정 필요 */}
-            <Link href={`/chat/`}>
-              <Button variant="ghost" className="w-full justify-start hover:bg-lime-200">
-                <FileInput className="w-4 h-4 mr-2" />
-                Feedback
-              </Button>
-            </Link>
-          </div>
+          )}
         </div>
 
-        <div className="absolute bottom-0 w-54 p-4">
-          <div className="space-y-2">
-            <Link href="/mypage">
-              <Button variant="ghost" className="w-full justify-start hover:bg-lime-200">
-                <UserCircle2 className="w-4 h-4 mr-2" />
-                My Page
-              </Button>
-            </Link>
-            
-            <Button variant="ghost" onClick={handleLogout} className="w-full justify-start hover:bg-lime-200">
-              <LogOut className="w-4 h-4 mr-2" />
-              Log out
-            </Button>
-          </div>
-        </div>
+        {isSidebarOpen && (
+          <>
+            <div className="p-4">
+              <div className="space-y-2">
+                {sampleInterviewHistory.map((interview) => (
+                  <Link key={interview.id} href={`/interview/${interview.id}`}>
+                    <div className={`p-3 hover:bg-gray-100 rounded-lg cursor-pointer ${
+                      interview.id === interview_id ? 'bg-gray-100 font-bold' : ''
+                    }`}>
+                      <p className="font-medium text-sm">{interview.company}/{interview.position}</p>
+                      <p className="text-xs text-gray-500">{interview.date}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 w-full p-4 border-t">
+              <div className="space-y-2">
+                <Link href="/mypage">
+                  <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-black hover:bg-gray-100">
+                    <UserCircle2 className="w-5 h-5 mr-3" />
+                    My Page
+                  </Button>
+                </Link>
+                
+                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-gray-600 hover:text-black hover:bg-gray-100">
+                  <LogOut className="w-5 h-5 mr-3" />
+                  Log out
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 ml-54 flex flex-col h-screen">
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-3xl mx-auto space-y-4">
-            {interview.questions.map((q, index) => (
-              <div key={q._id} className="space-y-2">
-                <div className="relative bg-lime-100 self-start max-w-[80%] rounded-lg">
+      <div className={`flex-1 flex flex-col h-screen ${isSidebarOpen ? 'ml-[240px]' : 'ml-[60px]'} transition-all duration-300`}>
+        {/* Mode Toggle Header */}
+        <div className="py-4 px-6 border-b bg-white">
+          <div className="flex items-center gap-6 ml-6">
+            <h1 className="text-xl font-semibold text-gray-900">Interview</h1>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                onClick={toggleVoiceMode}
+                variant="outline"
+                className="rounded-full px-4 py-2 flex items-center gap-2 text-sm"
+                >
+                {isVoiceMode ? (
+                  <>
+                    <Volume2 className="w-4 h-4" />
+                    음성 모드
+                  </>
+                ) : (
+                <>
+                    <MicOff className="w-4 h-4" />
+                    텍스트 모드
+                  </>
+                )}
+              </Button>
+              {isVoiceMode && (
+                <Button
+                  type="button"
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={isLoading}
+                  variant={isListening ? "default" : "outline"}
+                  className="rounded-full px-4 py-2 flex items-center gap-2 text-sm"
+                >
+                  <Mic className="w-4 h-4" />
+                  {isListening ? "녹음 중지" : "음성 녹음"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
 
-                  <div className="p-5">
-                    <div className="font-semibold">Q{index + 1}:</div>
-                    <p className="whitespace-pre-wrap">{q.question}</p>
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-3xl mx-auto space-y-8">
+            {interview.questions.map((q, index) => (
+              <div key={q._id} className="space-y-4">
+                {/* 질문 */}
+                <div className="flex justify-start">
+                  <div className="relative max-w-[80%] bg-gray-100 rounded-2xl">
+                    <div className="p-4">
+                      <p className="font-medium mb-1">Q{index + 1}:</p>
+                      <p className="whitespace-pre-wrap">{q.question}</p>
+                    </div>
                   </div>
                 </div>
+
+                {/* 답변 */}
                 {q.answer && (
-                  <div className="relative bg-blue-100 self-end ml-50 max-w-fit rounded-lg">
-                    <div className="p-5">
-                      <div className="font-semibold">Your Answer:</div>
-                      <p className="whitespace-pre-wrap">{q.answer}</p>
+                  <div className="flex justify-end">
+                    <div className="relative max-w-[80%] bg-lime-300 rounded-2xl">
+                      <div className="p-4">
+                        <p className="whitespace-pre-wrap">{q.answer}</p>
+                      </div>
                     </div>
                   </div>
                 )}
-                {q.feedback && (
-                  <div className="relative bg-green-100 self-center max-w-[80%] rounded-lg">
 
-                    <div className="p-5">
-                      <div className="font-semibold">Feedback:</div>
-                      <p className="whitespace-pre-wrap">{q.feedback}</p>
+                {/* 피드백 */}
+                {q.feedback && (
+                  <div className="flex justify-center">
+                    <div className="w-[90%] bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold text-gray-700">면접관 피드백</p>
+                          <div className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+                            Q{index + 1}
+                          </div>
+                        </div>
+                        <p className="text-gray-600 whitespace-pre-wrap">{q.feedback}</p>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
             ))}
             {isLoading && (
-              <div className="relative bg-lime-100 self-start max-w-[80%] ml-2 rounded-lg">
-                <div className="absolute -left-8 top-6">
-                </div>
-                <div className="p-5">
-                  <p>처리 중...</p>
+              <div className="flex justify-start">
+                <div className="relative max-w-[80%] bg-gray-100 rounded-2xl">
+                  <div className="p-4">
+                    <p>처리 중...</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -333,55 +408,32 @@ export default function Interview() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 mb-5">
+        <div className="p-6 bg-white">
           <div className="max-w-3xl mx-auto">
             {interview.currentQuestionIndex < interview.questions.length && (
-              <form onSubmit={handleSubmit} className="flex gap-2">
+              <form onSubmit={handleSubmit} className="flex gap-3">
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="답변을 입력하세요..."
-                  className="h-[100px] resize-none overflow-y-auto bg-white border-lime-500 shadow-sm rounded-xl"
+                  className="h-[100px] resize-none overflow-y-auto bg-gray-100 border-0 rounded-2xl"
                   disabled={isLoading || isListening}
                 />
-                <Button 
-                  type="submit" 
-                  className="bg-lime-400 hover:bg-lime-500"
-                  disabled={isLoading || isListening}
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-                
-                <Button
-                  type="button"
-                  onClick={toggleVoiceMode}
-                  variant="outline"
-                  className="flex items-center"
-                >
-                  {isVoiceMode ? (
-                    <>
-                      <Volume2 className="w-4 h-4 mr-2" />
-                      음성 모드
-                    </>
-                  ) : (
-                    <>
-                      <MicOff className="w-4 h-4 mr-2" />
-                      텍스트 모드
-                    </>
-                  )}
-                </Button>
-                {isVoiceMode && (
-                  <Button
-                    type="button"
-                    onClick={isListening ? stopListening : startListening}
-                    disabled={isLoading}
-                    variant="outline"
-                    className="flex items-center"
-                  >
-                    <Mic className="w-4 h-4 mr-2" />
-                    {isListening ? "녹음 중..." : "음성 입력"}
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    type="submit" 
+                    className="bg-lime-500 hover:bg-lime-600 rounded-full px-6"
+                    disabled={isLoading || isListening} >
+                    <Send className="w-4 h-4" />
                   </Button>
-                )}
+                  <Link href={`/chat/${interview_id}`}>
+                    <Button 
+                      className="bg-lime-500 hover:bg-lime-600 rounded-full px-6"
+                    >
+                      <File className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
               </form>
             )}
           </div>

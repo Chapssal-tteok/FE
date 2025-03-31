@@ -5,10 +5,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
-import { FilePen, UserCircle2, LogOut, RefreshCw, Send, Bot, Activity } from "lucide-react"
+import { FilePen, UserCircle2, LogOut, RefreshCw, Send, Bot, Menu, Video } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { analyzeResume, getChatResponse } from "@/services/openaiService"
-import Image from "next/image"
 
 // 개발 환경용 샘플 데이터
 const sampleResumeData = {
@@ -31,6 +30,13 @@ const sampleResumeData = {
 - 모던 웹 기술 스택 적용`
 }
 
+// 샘플 피드백 기록 데이터
+const sampleFeedbackHistory = [
+  { id: "1", company: "네이버", position: "프론트엔드 개발자", date: "2024.03.20" },
+  { id: "2", company: "카카오", position: "백엔드 개발자", date: "2024.03.19" },
+  { id: "3", company: "라인", position: "풀스택 개발자", date: "2024.03.18" },
+]
+
 export default function Chat() {
   const resume_id = useParams().id as string
   const [message, setMessage] = useState("")
@@ -39,6 +45,7 @@ export default function Chat() {
   const { logout } = useAuth()
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY
@@ -131,96 +138,120 @@ export default function Chat() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lime-50 to-white flex">
-
+    <div className="min-h-screen bg-white">
       {/* Sidebar */}
-      <div className="w-54 shadow bg-lime-100 border-r fixed h-screen">
-        <div className="p-4 border-b">
-          <Link href="/" className="text-xl font-bold">
-            <div className="flex items-center justify-center">
-              <Image src="/Vector.png" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1" />
-              <span className="ml-1">PreView</span>
-            </div>
-          </Link>
-        </div>
-
-        <div className="p-4">
-          <div className="space-y-4">
+      <div className={`${isSidebarOpen ? 'w-[240px]' : 'w-[60px]'} bg-white shadow-lg fixed h-screen z-50 transition-all duration-300`}>
+        <div className="flex justify-between items-center p-4 border-b">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="hover:bg-gray-100"
+          >
+            <Menu className="w-7 h-7" />
+          </Button>
+          
+          {isSidebarOpen && (
             <Link href="/writeResume">
-              <Button variant="ghost" className="w-full justify-start hover:bg-lime-200">
-                <FilePen className="w-4 h-4 mr-2" />
-                New Resume
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-gray-100"
+              >
+                <FilePen className="w-7 h-7" />
               </Button>
             </Link>
-            
-            {/* 링크 수정 필요 */}
-            <Link href={`/interview/`}>
-              <Button variant="ghost" className="w-full justify-start hover:bg-lime-200">
-                <Activity className="w-4 h-4 mr-2" />
-                Go Interview
-              </Button>
-            </Link>
-          </div>
+          )}
         </div>
 
-        <div className="absolute bottom-0 w-54 p-4">
-          <div className="space-y-2">
-            <Link href="/mypage">
-              <Button variant="ghost" className="w-full justify-start hover:bg-lime-200">
-                <UserCircle2 className="w-4 h-4 mr-2" />
-                My Page
-              </Button>
-            </Link>
-            
-            <Button variant="ghost" onClick={handleLogout} className="w-full justify-start hover:bg-lime-200">
-              <LogOut className="w-4 h-4 mr-2" />
-              Log out
-            </Button>
-          </div>
-        </div>
+        {isSidebarOpen && (
+          <>
+            <div className="p-4">
+              <div className="space-y-2">
+                {sampleFeedbackHistory.map((feedback) => (
+                  <Link key={feedback.id} href={`/chat/${feedback.id}`}>
+                    <div className={`p-3 hover:bg-gray-100 rounded-lg cursor-pointer ${
+                      feedback.id === resume_id ? 'bg-gray-100 font-bold' : ''
+                    }`}>
+                      <p className="font-medium text-sm">{feedback.company}/{feedback.position}</p>
+                      <p className="text-xs text-gray-500">{feedback.date}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 w-full p-4">
+              <div className="space-y-2">
+                <Link href="/mypage">
+                  <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-black hover:bg-gray-100">
+                    <UserCircle2 className="w-5 h-5 mr-3" />
+                    My Page
+                  </Button>
+                </Link>
+                
+                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-gray-600 hover:text-black hover:bg-gray-100">
+                  <LogOut className="w-5 h-5 mr-3" />
+                  Log out
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 ml-54 flex flex-col h-screen">
+      <div className={`flex-1 flex flex-col h-screen ${isSidebarOpen ? 'ml-[240px]' : 'ml-[60px]'} transition-all duration-300`}>
+        {/* Mode Toggle Header */}
+        <div className="py-5 px-6 border-b bg-white">
+          <div className="flex items-center gap-6 ml-6">
+            <h1 className="text-xl font-semibold text-gray-900">Feedback</h1>
+          </div>
+        </div>
+        
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-3xl mx-auto space-y-4">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-3xl mx-auto space-y-6">
             {messages.map((msg, idx) => (
-              <div key={idx} className={`relative ${
-                msg.role === "AI" 
-                  ? "bg-lime-100 self-start max-w-[80%] ml-2" 
-                  : "bg-gray-100 self-end ml-auto max-w-fit"
-              } rounded-lg`}>
-                {msg.role === "AI" && (
-                  <div className="absolute -left-8 top-6">
-                    <Bot className="w-6 h-6 text-lime-600" />
+              <div key={idx} className={`flex ${msg.role === "AI" ? "justify-start" : "justify-end"}`}>
+                <div className={`relative max-w-[80%] ${
+                  msg.role === "AI" 
+                    ? "bg-gray-100" 
+                    : "bg-lime-300"
+                } rounded-2xl`}>
+                  {msg.role === "AI" && (
+                    <div className="absolute -left-10 top-2">
+                      <Bot className="w-6 h-6 text-gray-600" />
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
                   </div>
-                )}
-                <div className="p-5">
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  {msg.role === "AI" && idx === messages.length - 1 && (
+                    <div className="absolute bottom-2 right-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setMessages([])}
+                        disabled={isLoading}
+                        className="h-6 w-6 hover:bg-gray-200"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                {msg.role === "AI" && idx === messages.length - 1 && (
-                  <div className="absolute bottom-2 right-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setMessages([])}
-                      disabled={isLoading}
-                      className="h-6 w-6"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                    </Button>
-                  </div>
-                )}
               </div>
             ))}
             {isLoading && (
-              <div className="relative bg-lime-100 self-start max-w-[80%] ml-2 rounded-lg">
-                <div className="absolute -left-8 top-6">
-                  <Bot className="w-6 h-6 text-lime-600" />
-                </div>
-                <div className="p-5">
-                  <p>답변을 생성하는 중...</p>
+              <div className="flex justify-start">
+                <div className="relative max-w-[80%] bg-gray-100 rounded-2xl">
+                  <div className="absolute -left-10 top-2">
+                    <Bot className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <div className="p-4">
+                    <p>답변을 생성하는 중...</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -229,23 +260,32 @@ export default function Chat() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 mb-5">
+        <div className="p-6 bg-white">
           <div className="max-w-3xl mx-auto">
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder="궁금한 점을 물어보세요"
-                className="h-[100px] resize-none overflow-y-auto bg-white border-lime-500 shadow-sm rounded-xl"
+                className="h-[100px] resize-none overflow-y-auto bg-gray-100 border-0 rounded-2xl"
                 disabled={isLoading}
               />
-              <Button 
-                className="bg-lime-400 hover:bg-lime-500" 
-                onClick={handleSendMessage}
-                disabled={isLoading}>
-                <Send className="w-4 h-4" />
-              </Button>
+              <div className="flex flex-col gap-3">
+                <Button 
+                  className="bg-lime-500 hover:bg-lime-600 rounded-full px-6" 
+                  onClick={handleSendMessage}
+                  disabled={isLoading}>
+                  <Send className="w-4 h-4" />
+                </Button>
+                <Link href={`/interview/${resume_id}`}>
+                  <Button 
+                    className="bg-lime-500 hover:bg-lime-600 rounded-full px-6"
+                  >
+                    <Video className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
