@@ -9,46 +9,30 @@ import { FilePen, UserCircle2, LogOut, RefreshCw, Send, Bot, Menu, Video } from 
 import { useRouter, useParams } from "next/navigation"
 import { analyzeResume, getChatResponse } from "@/services/openaiService"
 
-// 개발 환경용 샘플 데이터
-const sampleResumeData = {
-  id: "1",
-  company: "네이버",
-  position: "프론트엔드 개발자",
-  content: `[지원동기]
-저는 네이버의 프론트엔드 개발자로서 사용자 경험을 혁신하고 싶습니다. 
-대학에서 웹 개발을 전공했으며, 다양한 프로젝트를 통해 실무 경험을 쌓았습니다.
-
-[프로젝트 경험]
-1. 캡스톤 디자인 프로젝트
-- React와 TypeScript를 활용한 웹 애플리케이션 개발
-- 사용자 경험 개선을 위한 UI/UX 디자인 개선
-- 팀 프로젝트에서 프론트엔드 리더 역할 수행
-
-2. 개인 포트폴리오 웹사이트
-- Next.js와 Tailwind CSS를 활용한 반응형 웹사이트 개발
-- SEO 최적화 및 성능 개선
-- 모던 웹 기술 스택 적용`
+interface FeedbackHistory {
+  id: string
+  company: string
+  position: string
+  date: string
 }
 
-// 샘플 피드백 기록 데이터
-const sampleFeedbackHistory = [
-  { id: "1", company: "네이버", position: "프론트엔드 개발자", date: "2024.03.20" },
-  { id: "2", company: "카카오", position: "백엔드 개발자", date: "2024.03.19" },
-  { id: "3", company: "라인", position: "풀스택 개발자", date: "2024.03.18" },
-]
+interface Message {
+  role: string;
+  content: string;
+}
 
 export default function Chat() {
   const resume_id = useParams().id as string
   const [message, setMessage] = useState("")
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const { logout } = useAuth()
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [feedbackHistory, setFeedbackHistory] = useState<FeedbackHistory[]>([])
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -62,15 +46,27 @@ export default function Chat() {
     const fetchInitialMessages = async () => {
       try {
         setIsLoading(true)
-        // // 자기소개서 데이터 가져오기
-        // const resumeResponse = await fetch(`${API_URL}/resumes/${resume_id}`)
-        // if(!resumeResponse.ok) {
-        //   throw new Error("Failed to fetch resume data")
-        // }
-        // const resumeData = await resumeResponse.json()
+        // 자기소개서 데이터 가져오기
+        const resumeResponse = await fetch(`${API_URL}/resumes/${resume_id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        if(!resumeResponse.ok) {
+          throw new Error("Failed to fetch resume data")
+        }
+        const resumeData = await resumeResponse.json()
 
-        // 개발 환경에서는 샘플 데이터 사용
-        const resumeData = sampleResumeData
+        // 피드백 기록 가져오기
+        const historyResponse = await fetch(`${API_URL}/resumes/feedback-history`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        if(historyResponse.ok) {
+          const historyData = await historyResponse.json()
+          setFeedbackHistory(historyData)
+        }
 
         // ChatGPT에 자기소개서 분석 요청
         const feedback = await analyzeResume(
@@ -93,7 +89,7 @@ export default function Chat() {
     }
 
     fetchInitialMessages()
-  }, [resume_id])
+  }, [resume_id, API_URL])
 
   const handleLogout = () => {
     logout()
@@ -105,19 +101,23 @@ export default function Chat() {
 
     try {
       setIsLoading(true)
-      // const resumeResponse = await fetch(`${API_URL}/resumes/${resume_id}`)
-      // if(!resumeResponse.ok) {
-      //   throw new Error("Failed to fetch resume data")
-      // }
-      // const resumeData = await resumeResponse.json()
+      const resumeResponse = await fetch(`${API_URL}/resumes/${resume_id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      if(!resumeResponse.ok) {
+        throw new Error("Failed to fetch resume data")
+      }
+      const resumeData = await resumeResponse.json()
+      console.log("Resume Data:", resumeData);
 
-      // 개발 환경에서는 샘플 데이터 사용
-      const resumeData = sampleResumeData
+      const reply = await getChatResponse(message, 'gpt-4', 'text')
+      if (typeof reply !== 'string') throw new Error('Invalid response type')
 
-      const reply = await getChatResponse(message, messages, resumeData.content)
       setMessages((prev) => [...prev, 
         { role: "user", content: message },
-        { role: "AI", content: reply || "죄송합니다. 응답을 생성할 수 없습니다." }])
+        { role: "AI", content: reply }])
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
@@ -168,7 +168,7 @@ export default function Chat() {
           <>
             <div className="p-4">
               <div className="space-y-2">
-                {sampleFeedbackHistory.map((feedback) => (
+                {feedbackHistory.map((feedback) => (
                   <Link key={feedback.id} href={`/chat/${feedback.id}`}>
                     <div className={`p-3 hover:bg-[#DEFFCF]/40 rounded-lg cursor-pointer ${
                       feedback.id === resume_id ? 'bg-[#DEFFCF] font-bold' : ''

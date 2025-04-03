@@ -15,7 +15,6 @@ export default function Home() {
   const [index, setIndex] = useState(0)
   const [subIndex, setSubIndex] = useState(0)
   const [typingCompleted, setTypingCompleted] = useState(false)
-  const [cursorInSubText, setCursorInSubText] = useState(false)
 
   const text = "PreView"
   const subText = "자기소개서 AI 분석 및\n면접 예상 질문 제공 서비스"
@@ -39,8 +38,6 @@ export default function Home() {
         setSubIndex(subIndex + 1)
       }, 50) // 서브 텍스트 타이핑 속도 설정
       return () => clearTimeout(timer)
-    } else if(subIndex >= subText.length) {
-      setCursorInSubText(false)
     }
   }, [subIndex, typingCompleted])
 

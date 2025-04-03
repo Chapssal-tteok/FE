@@ -1,8 +1,18 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription,DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { cn } from "@/lib/utils"
+
+const deleteAccountSchema = z.object({
+  password: z.string().min(1, "비밀번호를 입력해주세요"),
+})
+
+type DeleteAccountFormData = z.infer<typeof deleteAccountSchema>
 
 interface AccountDeleteDialogProps {
   isOpen: boolean
@@ -11,41 +21,91 @@ interface AccountDeleteDialogProps {
 }
 
 export function AccountDeleteDialog({ isOpen, onOpenChange, onConfirm }: AccountDeleteDialogProps) {
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const handleSubmit = async () => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<DeleteAccountFormData>({
+    resolver: zodResolver(deleteAccountSchema),
+  })
+
+  const onSubmit = async (data: DeleteAccountFormData) => {
     try {
-      await onConfirm(password)
+      setIsDeleting(true)
+      await onConfirm(data.password)
+      reset()
       onOpenChange(false)
-    } catch (error: any) {
-      setError(error.message || "회원 탈퇴 중 오류가 발생했습니다.")
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Account deletion error:", error.message)
+      } else {
+        console.error("Account deletion error:", error)
+      }
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>정말 삭제하시겠습니까?</DialogTitle>
-          <DialogDescription>
-            이 작업은 실행 취소할 수 없습니다.<br />모든 기록과 계정이 영구적으로 삭제됩니다.
+          <DialogTitle>계정 삭제</DialogTitle>
+          <DialogDescription className="pt-2">
+            <p className="text-red-600 font-medium mb-2">⚠️ 주의</p>
+            <p>
+              이 작업은 실행 취소할 수 없습니다.
+              <br />
+              모든 기록과 계정이 영구적으로 삭제됩니다.
+            </p>
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <Label htmlFor="deletePassword">비밀번호 입력</Label>
-          <Input
-            id="deletePassword"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <DialogFooter className="mt-4">
-          <Button variant="destructive" className="hover:bg-red-400 hover:text-white" onClick={handleSubmit}>계정 삭제</Button>
-        </DialogFooter>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="deletePassword">비밀번호 확인</Label>
+            <Input
+              id="deletePassword"
+              type="password"
+              {...register("password")}
+              disabled={isDeleting}
+              aria-invalid={errors.password ? "true" : "false"}
+              aria-describedby={errors.password ? "deletePassword-error" : undefined}
+            />
+            {errors.password && (
+              <p id="deletePassword-error" className="text-sm text-red-500" role="alert">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isDeleting}
+              className="flex-1"
+              aria-label="계정 삭제 취소"
+            >
+              취소
+            </Button>
+            <Button
+              type="submit"
+              variant="destructive"
+              disabled={isDeleting}
+              className={cn(
+                "flex-1",
+                isDeleting && "opacity-50 cursor-not-allowed"
+              )}
+              aria-label="계정 삭제"
+              aria-busy={isDeleting}
+            >
+              {isDeleting ? "삭제 중..." : "계정 삭제"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )

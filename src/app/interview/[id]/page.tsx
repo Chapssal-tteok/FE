@@ -1,36 +1,48 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { FilePen, UserCircle2, LogOut, Send, Mic, MicOff, Volume2, Menu, File } from "lucide-react"
 import Link from "next/link"
 import { Textarea } from "@/components/ui/textarea"
-
+import { generateInterviewQuestions, analyzeAnswer, generateFollowUpQuestions } from '@/services/interviewService'
 
 interface Question {
   _id: string
   question: string
   answer?: string
-  feedback?: string
+  feedback?: InterviewFeedback
+  followUpQuestions?: string[]
 }
 
 interface Interview {
   _id: string
+  company: string
+  position: string
+  resumeContent: string
   questions: Question[]
   currentQuestionIndex: number
 }
 
-// 샘플 인터뷰 기록 데이터 추가
-const sampleInterviewHistory = [
-  { id: "1", company: "네이버", position: "프론트엔드 개발자", date: "2024.03.20" },
-  { id: "2", company: "카카오", position: "백엔드 개발자", date: "2024.03.19" },
-  { id: "3", company: "라인", position: "풀스택 개발자", date: "2024.03.18" },
-]
+interface InterviewFeedback {
+  strengths: string[]
+  areasForImprovement: string[]
+  suggestions: string[]
+  score: number
+}
 
-export default function Interview() {
+interface InterviewHistory {
+  id: string
+  company: string
+  position: string
+  date: string
+  status: string
+}
+
+export default function InterviewPage() {
   const interview_id = useParams().id as string
   const { isLoggedIn, logout } = useAuth()
   const router = useRouter()
@@ -44,125 +56,18 @@ export default function Interview() {
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [interviewHistory, setInterviewHistory] = useState<InterviewHistory[]>([])
+  const [feedback, setFeedback] = useState<InterviewFeedback | null>(null)
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([])
+  const [showFollowUpQuestions, setShowFollowUpQuestions] = useState<Record<string, boolean>>({})
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  useEffect(() => {
-    if (!isLoggedIn) {
-      router.push("/login")
-    } else {
-      // 샘플 데이터 설정
-      const sampleInterview: Interview = {
-        _id: "sample-interview-1",
-        questions: [
-          {
-            _id: "q1",
-            question: "자기소개를 해주세요.",
-            answer: "안녕하세요. 저는 컴퓨터공학을 전공한 김철수입니다. 웹 개발에 관심이 많아 React와 Node.js를 주로 공부하고 있습니다.",
-            feedback: "좋은 자기소개입니다. 기술 스택에 대한 구체적인 언급이 인상적입니다."
-          },
-          {
-            _id: "q2",
-            question: "프로젝트 경험 중 가장 기억에 남는 것은 무엇인가요?",
-            answer: "대학교 3학년 때 진행한 AI 기반 추천 시스템 프로젝트가 가장 기억에 남습니다. 사용자 행동 데이터를 분석하여 맞춤형 추천을 제공하는 시스템을 개발했습니다.",
-            feedback: "구체적인 프로젝트 경험과 기술적 도전을 잘 설명해주셨습니다."
-          },
-          {
-            _id: "q3",
-            question: "협업 시 갈등이 발생하면 어떻게 해결하시나요?",
-            answer: "저는 항상 개방적인 소통을 지향합니다. 팀원들과 정기적인 미팅을 통해 의견을 나누고, 문제가 발생하면 즉시 공유하여 함께 해결방안을 찾습니다.",
-            feedback: "효과적인 커뮤니케이션 방식에 대해 잘 설명해주셨습니다."
-          }
-        ],
-        currentQuestionIndex: 2
-      }
-      setInterview(sampleInterview)
-    }
-  }, [isLoggedIn, router, interview_id])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [interview])
-
-  const handleLogout = () => {
-    logout()
-    router.push("/")
-  }
-
-  // 면접 세션 로드
-  const loadInterview = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`${API_URL}/interviews/${interview_id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      const data = await response.json()
-      setInterview(data)
-      if (isVoiceMode && data.questions[0]) {
-        await speakText(data.questions[0].question)
-      }
-    } catch (error) {
-      console.error("Failed to load interview:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || !interview) return
-
-    setIsLoading(true)
-    const currentQuestion = interview.questions[interview.currentQuestionIndex]
-
-    try {
-      const response = await fetch(
-        `${API_URL}/interviews/${interview._id}/questions/${currentQuestion._id}/answer`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ answer: input }),
-        }
-      )
-      const updatedInterview = await response.json()
-      setInterview(updatedInterview)
-      setInput("")
-
-      // 다음 질문이 있으면 음성으로 읽기
-      if (
-        isVoiceMode &&
-        updatedInterview.currentQuestionIndex < updatedInterview.questions.length - 1
-      ) {
-        const nextQuestion =
-          updatedInterview.questions[updatedInterview.currentQuestionIndex + 1]
-        await speakText(nextQuestion.question)
-      }
-    } catch (error) {
-      console.error("Failed to submit answer:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const toggleVoiceMode = () => {
-    setIsVoiceMode(!isVoiceMode)
-    if (!isVoiceMode && interview?.questions[interview.currentQuestionIndex]) {
-      speakText(interview.questions[interview.currentQuestionIndex].question)
-    }
-  }
-
-  // 음성 모드: AI가 생성한 질문을 음성으로 변환
-  const speakText = async (text: string) => {
+  const speakText = useCallback(async (text: string) => {
     try {
       const response = await fetch(`${API_URL}/interviews/${interview_id}/audio-qas`, {
         method: "POST",
@@ -185,6 +90,137 @@ export default function Interview() {
       }
     } catch (error) {
       console.error("Error in text-to-speech:", error)
+    }
+  }, [API_URL, interview_id])
+
+  const loadInterview = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/interviews/${interview_id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      const data = await response.json()
+      
+      // 면접 질문이 없으면 생성
+      if (!data.questions || data.questions.length === 0) {
+        const generatedQuestions = await generateInterviewQuestions(
+          data.company,
+          data.position,
+          data.resumeContent
+        )
+        data.questions = generatedQuestions
+      }
+      
+      setInterview(data)
+      if (isVoiceMode && data.questions[0]) {
+        await speakText(data.questions[0].question)
+      }
+    } catch (error) {
+      console.error("Failed to load interview:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [API_URL, interview_id, isVoiceMode, speakText])
+
+  const fetchInterviewHistory = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/interviews/history`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setInterviewHistory(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch interview history:", error)
+    }
+  }, [API_URL])
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push("/login")
+    } else {
+      loadInterview()
+      fetchInterviewHistory()
+    }
+  }, [isLoggedIn, router, interview_id, loadInterview, fetchInterviewHistory])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [interview])
+
+  const handleLogout = () => {
+    logout()
+    router.push("/")
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim() || !interview) return
+
+    setIsLoading(true)
+    const currentQuestion = interview.questions[interview.currentQuestionIndex]
+
+    try {
+      // 답변 분석 및 피드백 생성
+      const feedback = await analyzeAnswer(
+        currentQuestion.question,
+        input,
+        interview.resumeContent
+      )
+      setFeedback(feedback)
+
+      // 추가 질문 생성
+      const followUps = await generateFollowUpQuestions(
+        currentQuestion.question,
+        input
+      )
+      setFollowUpQuestions(followUps)
+
+      // 답변 저장
+      const response = await fetch(
+        `${API_URL}/interviews/${interview._id}/questions/${currentQuestion._id}/answer`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ 
+            answer: input,
+            feedback: feedback,
+            followUpQuestions: followUps
+          }),
+        }
+      )
+      const updatedInterview = await response.json()
+      setInterview(updatedInterview)
+      setInput('')
+
+      // 다음 질문이 있으면 음성으로 읽기
+      if (
+        isVoiceMode &&
+        updatedInterview.currentQuestionIndex < updatedInterview.questions.length - 1
+      ) {
+        const nextQuestion =
+          updatedInterview.questions[updatedInterview.currentQuestionIndex + 1]
+        await speakText(nextQuestion.question)
+      }
+    } catch (error) {
+      console.error('Failed to submit answer:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const toggleVoiceMode = () => {
+    setIsVoiceMode(!isVoiceMode)
+    if (!isVoiceMode && interview?.questions[interview.currentQuestionIndex]) {
+      speakText(interview.questions[interview.currentQuestionIndex].question)
     }
   }
 
@@ -242,9 +278,14 @@ export default function Interview() {
     }
   }
 
-  if (!isLoggedIn || !interview) return null
+  const toggleFollowUpQuestions = (questionId: string) => {
+    setShowFollowUpQuestions(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId]
+    }));
+  };
 
-  const currentQuestion = interview.questions[interview.currentQuestionIndex]
+  if (!isLoggedIn || !interview) return null
 
   return (
     <div className="min-h-screen bg-white">
@@ -277,7 +318,7 @@ export default function Interview() {
           <>
             <div className="p-4">
               <div className="space-y-2">
-                {sampleInterviewHistory.map((interview) => (
+                {interviewHistory.map((interview) => (
                   <Link key={interview.id} href={`/interview/${interview.id}`}>
                     <div className={`p-3 hover:bg-[#DEFFCF]/40 rounded-lg cursor-pointer ${
                       interview.id === interview_id ? 'bg-[#DEFFCF] font-bold' : ''
@@ -377,23 +418,67 @@ export default function Interview() {
                 )}
 
                 {/* 피드백 */}
-                {q.feedback && (
+                {feedback && (
                   <div className="flex justify-center">
                     <div className="w-[90%] bg-white border-2 border-[#DEFFCF] rounded-xl shadow-sm">
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <p className="font-semibold text-gray-700">면접관 피드백</p>
-                          <div className="px-3 py-1 bg-[#DEFFCF] rounded-full text-sm text-gray-600">
-                            Q{index + 1}
+                          <div className="flex items-center gap-2">
+                            <div className="px-3 py-1 bg-[#DEFFCF] rounded-full text-sm text-gray-600">
+                              Q{index + 1}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleFollowUpQuestions(q._id)}
+                              className="hover:bg-[#DEFFCF]/40"
+                            >
+                              추가 질문
+                            </Button>
                           </div>
                         </div>
-                        <p className="text-gray-600 whitespace-pre-wrap">{q.feedback}</p>
+                        <div className="space-y-2">
+                          <div>
+                            <p className="font-medium text-gray-700">강점:</p>
+                            <p className="text-gray-600">{feedback.strengths.join(', ')}</p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">개선점:</p>
+                            <p className="text-gray-600">{feedback.areasForImprovement.join(', ')}</p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">제안:</p>
+                            <p className="text-gray-600">{feedback.suggestions.join(', ')}</p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">점수:</p>
+                            <p className="text-gray-600">{feedback.score}/100</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 추가 질문 */}
+                {showFollowUpQuestions[q._id] && followUpQuestions && followUpQuestions.length > 0 && (
+                  <div className="flex justify-start">
+                    <div className="relative max-w-[80%] bg-[#DEFFCF]/40 rounded-2xl">
+                      <div className="p-4">
+                        <p className="font-medium mb-2">추가 질문:</p>
+                        {followUpQuestions.map((followUp, i) => (
+                          <p key={i} className="whitespace-pre-wrap mb-2">
+                            • {followUp}
+                          </p>
+                        ))}
                       </div>
                     </div>
                   </div>
                 )}
               </div>
             ))}
+            
             {isLoading && (
               <div className="flex justify-start">
                 <div className="relative max-w-[80%] bg-[#DEFFCF] rounded-2xl">
