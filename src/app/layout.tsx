@@ -2,17 +2,17 @@ import type React from "react"
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "../styles/globals.css";
-import { AuthProvider } from "../contexts/AuthContext"
+import { AuthProvider } from "@/contexts/AuthContext"
 
 const Gmarket = localFont({
   src: [
     {
-      path: "./font/GmarketSansTTFMedium.woff2",
+      path: "../../public/font/GmarketSansTTFMedium.woff2",
       weight: "400",
       style: "normal"
     },
     {
-      path: "./font/GmarketSansTTFBold.woff2",
+      path: "../../public/font/GmarketSansTTFBold.woff2",
       weight: "700",
       style: "bold"
     },
