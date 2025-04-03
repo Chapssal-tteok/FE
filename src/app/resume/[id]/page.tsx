@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
@@ -21,32 +21,25 @@ export default function ResumePage() {
   const { isLoggedIn, logout } = useAuth()
   const resume_id = useParams().id
   const router = useRouter()
-  const [ resume, setResume ] = useState<Resume | null>({
-    id: "1",
-    company: "네이버",
-    position: "프론트엔드 개발자",
-    content: `1. 지원 동기 (500자)
-저는 네이버의 프론트엔드 개발자로서 사용자 경험을 혁신하고 싶습니다. 네이버의 기술력과 혁신적인 서비스 개발 문화에 깊은 인상을 받았으며, 특히 네이버의 오픈소스 기여와 기술 공유 문화가 제가 추구하는 개발자의 모습과 일치합니다.
-
-2. 프로젝트 경험 (1000자)
-[프로젝트명: AI 기반 자기소개서 작성 도우미]
-- React와 TypeScript를 활용한 모던 웹 애플리케이션 개발
-- OpenAI API를 활용한 AI 기반 자기소개서 피드백 시스템 구현
-- 사용자 경험 개선을 위한 반응형 디자인 적용
-- Git을 활용한 버전 관리 및 팀 협업
-
-3. 기술 스택 (500자)
-- Frontend: React, TypeScript, Next.js, Tailwind CSS
-- Backend: Node.js, Express
-- Database: MongoDB
-- AI: OpenAI API
-- Version Control: Git, GitHub
-- CI/CD: GitHub Actions`,
-    createdAt: "2024-03-20"
-  })
-  const [ loading, setLoading ] = useState(false)
+  const [ resume, setResume ] = useState<Resume | null>(null)
+  const [ loading, setLoading ] = useState(true)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+  const fetchResume = useCallback(async (resume_id: string) => {
+    try {
+      const response = await fetch(`${API_URL}/resume/${resume_id}`)
+      if(!response.ok) {
+        throw new Error("Failed to fetch resume data")
+      }
+      const data = await response.json()
+      setResume(data)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }, [API_URL])
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -56,10 +49,10 @@ export default function ResumePage() {
     if (!resume_id) {
       return
     }
-    // if (typeof resume_id === 'string') {
-    //   fetchResume(resume_id)
-    // }
-  }, [isLoggedIn, resume_id, router])
+    if (typeof resume_id === 'string') {
+      fetchResume(resume_id)
+    }
+  }, [isLoggedIn, resume_id, router, fetchResume])
 
   const handleLogout = () => {
     console.log("Logging out...")
@@ -67,22 +60,6 @@ export default function ResumePage() {
     console.log("After logout:", { isLoggedIn })
     router.push("/")
   }
-
-  // 작성한 자기소개서 가져오기
-  // const fetchResume = async (resume_id: string) => {
-  //   try {
-  //     const response = await fetch(`${API_URL}/resume/${resume_id}`)
-  //     if(!response.ok) {
-  //       throw new Error("Failed to fetch resume data")
-  //     }
-  //     const data = await response.json()
-  //     setResume(data)
-  //   } catch (error) {
-  //     console.error(error)
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   if(loading) return <p>Loading...</p>
   if(!resume) return <p>Resume not found</p>

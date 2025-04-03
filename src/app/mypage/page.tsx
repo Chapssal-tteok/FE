@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
@@ -11,6 +11,7 @@ import { AccountDeleteDialog } from "@/components/mypage/AccountDeleteDialog"
 import { DeleteAllRecordsDialog } from "@/components/mypage/DeleteAllRecordsDialog"
 import Link from "next/link"
 import Image from "next/image"
+
 interface Resume {
   id: string
   company: string
@@ -36,83 +37,53 @@ export default function MyPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-  // 샘플 데이터
-  const sampleResumes: Resume[] = [
-    {
-      id: "1",
-      company: "네이버",
-      position: "프론트엔드 개발자",
-      createdAt: "2024-03-15"
-    },
-    {
-      id: "2",
-      company: "카카오",
-      position: "백엔드 개발자",
-      createdAt: "2024-03-14"
-    },
-    {
-      id: "3",
-      company: "구글",
-      position: "풀스택 개발자",
-      createdAt: "2024-03-13"
+  const fetchResumes = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/resumes`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      const data = await response.json()
+      setResumes(data)
+    } catch (error) {
+      console.error("Failed to fetch resumes:", error)
     }
-  ]
+  }, [API_URL])
 
-  const sampleInterviews: Interview[] = [
-    {
-      id: "1",
-      company: "네이버",
-      position: "프론트엔드 개발자",
-      createdAt: "2024-03-15"
-    },
-    {
-      id: "2",
-      company: "카카오",
-      position: "백엔드 개발자",
-      createdAt: "2024-03-14"
-    },
-    {
-      id: "3",
-      company: "구글",
-      position: "풀스택 개발자",
-      createdAt: "2024-03-13"
+  const fetchInterviews = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/interviews`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      const data = await response.json()
+      setInterviews(data)
+    } catch (error) {
+      console.error("Failed to fetch interviews:", error)
     }
-  ]
+  }, [API_URL])
 
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/login")
     } else {
-      // fetchResumes()
-      // fetchInterviews()
-      setResumes(sampleResumes)
-      setInterviews(sampleInterviews)
+      fetchResumes()
+      fetchInterviews()
     }
-  }, [isLoggedIn])
-
-  // const fetchResumes = async () => {
-  //   try {
-  //     const response = await fetch(`${API_URL}/resumes`)
-  //     const data = await response.json()
-  //     setResumes(data)
-  //   } catch (error) {
-  //     console.error("Failed to fetch resumes:", error)
-  //   }
-  // }
-
-  // const fetchInterviews = async () => {
-  //   try {
-  //     const response = await fetch(`${API_URL}/interviews`)
-  //     const data = await response.json()
-  //     setInterviews(data)
-  //   } catch (error) {
-  //     console.error("Failed to fetch interviews:", error)
-  //   }
-  // }
+  }, [isLoggedIn, fetchResumes, fetchInterviews, router])
 
   const handleDeleteResumes = async (selectedIds: string[]) => {
     try {
-      // await Promise.all(selectedIds.map(id => fetch(`${API_URL}/resumes/${id}`, { method: "DELETE" })))
+      await Promise.all(selectedIds.map(id => 
+        fetch(`${API_URL}/resumes/${id}`, { 
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+      ))
       setResumes(prev => prev.filter(item => !selectedIds.includes(item.id)))
     } catch (error) {
       console.error("Failed to delete resumes:", error)
@@ -121,7 +92,14 @@ export default function MyPage() {
 
   const handleDeleteInterviews = async (selectedIds: string[]) => {
     try {
-      // await Promise.all(selectedIds.map(id => fetch(`${API_URL}/interviews/${id}`, { method: "DELETE" })))
+      await Promise.all(selectedIds.map(id => 
+        fetch(`${API_URL}/interviews/${id}`, { 
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+      ))
       setInterviews(prev => prev.filter(item => !selectedIds.includes(item.id)))
     } catch (error) {
       console.error("Failed to delete interviews:", error)
@@ -129,30 +107,36 @@ export default function MyPage() {
   }
 
   const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
-    // const response = await fetch(`${API_URL}/users/password`, {
-    //   method: "PATCH",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ currentPassword, newPassword }),
-    // })
-    // if (!response.ok) {
-    //   const data = await response.json()
-    //   throw new Error(data.message || "비밀번호 변경에 실패했습니다. 현재 비밀번호를 확인해주세요.")
-    // }
+    const response = await fetch(`${API_URL}/users/password`, {
+      method: "PATCH",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.message || "비밀번호 변경에 실패했습니다. 현재 비밀번호를 확인해주세요.")
+    }
     alert("비밀번호가 성공적으로 변경되었습니다.")
   }
 
   const handleAccountDelete = async (password: string) => {
     if (!user) throw new Error("User not found")
-    // const response = await fetch(`${API_URL}/users/${user.id}`, {
-    //   method: "DELETE",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ currentPassword: password }),
-    // })
+    const response = await fetch(`${API_URL}/users/${user.id}`, {
+      method: "DELETE",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ currentPassword: password }),
+    })
 
-    // if (!response.ok) {
-    //   const data = await response.json()
-    //   throw new Error(data.message || "회원 탈퇴에 실패하였습니다.")
-    // }
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.message || "회원 탈퇴에 실패하였습니다.")
+    }
 
     logout()
     router.push("/")
@@ -248,9 +232,9 @@ export default function MyPage() {
       <DeleteAllRecordsDialog
         isOpen={isDeleteAllRecordsDialogOpen}
         onOpenChange={setIsDeleteAllRecordsDialogOpen}
-        onConfirm={() => {
-          handleDeleteResumes(resumes.map(r => r.id))
-          handleDeleteInterviews(interviews.map(i => i.id))
+        onConfirm={async () => {
+          await handleDeleteResumes(resumes.map(r => r.id))
+          await handleDeleteInterviews(interviews.map(i => i.id))
         }}
       />
     </div>
