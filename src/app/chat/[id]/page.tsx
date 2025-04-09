@@ -1,28 +1,27 @@
+// chat/[id]/page.tsx
 "use client"
 
+import { ResumeControllerService } from "@/api-client"
 import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { AppSidebar } from "@/components/app-sidebar"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
-import { FilePen, UserCircle2, LogOut, RefreshCw, Send, Bot, Menu, Video } from "lucide-react"
+import { RefreshCw, Send, Bot, Video } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { analyzeResume, getChatResponse } from "@/services/openaiService"
 
-interface FeedbackHistory {
-  id: string
-  company: string
-  position: string
-  date: string
-}
-
 interface Message {
-  role: string;
+  role: "user" | "AI"
   content: string;
 }
 
 export default function Chat() {
-  const resume_id = useParams().id as string
+  const { id: resume_id } = useParams()
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -30,9 +29,6 @@ export default function Chat() {
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const [feedbackHistory, setFeedbackHistory] = useState<FeedbackHistory[]>([])
-
-  const API_URL = process.env.NEXT_PUBLIC_API_URL
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -46,34 +42,25 @@ export default function Chat() {
     const fetchInitialMessages = async () => {
       try {
         setIsLoading(true)
-        // 자기소개서 데이터 가져오기
-        const resumeResponse = await fetch(`${API_URL}/resumes/${resume_id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        })
-        if(!resumeResponse.ok) {
-          throw new Error("Failed to fetch resume data")
-        }
-        const resumeData = await resumeResponse.json()
 
-        // 피드백 기록 가져오기
-        const historyResponse = await fetch(`${API_URL}/resumes/feedback-history`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        })
-        if(historyResponse.ok) {
-          const historyData = await historyResponse.json()
-          setFeedbackHistory(historyData)
+        // 자기소개서 데이터 가져오기
+        const resumeResponse = await ResumeControllerService.getResume(Number(resume_id))
+        if (!resumeResponse.result) {
+          throw new Error("자기소개서 정보를 불러올 수 없습니다.")
         }
+        const resumeData = resumeResponse.result
+        const { resumeQas, company, position } = resumeData
+
+        // 문항과 답변 조합
+        const combinedContent = resumeQas
+          ? resumeQas.map((qa, index) => `문항 ${index + 1}: ${qa.question}\n답변: ${qa.answer}`).join('\n\n')
+          : "자기소개서 문항이 없습니다.";
 
         // ChatGPT에 자기소개서 분석 요청
-        const feedback = await analyzeResume(
-          resumeData.content,
-          resumeData.company,
-          resumeData.position
-        )
+        if (!company || !position) {
+          throw new Error("회사명 또는 직무 정보가 누락되었습니다.");
+        }
+        const feedback = await analyzeResume(combinedContent, company, position)
         
         // 초기 메시지 설정
         setMessages([
@@ -89,7 +76,7 @@ export default function Chat() {
     }
 
     fetchInitialMessages()
-  }, [resume_id, API_URL])
+  }, [resume_id])
 
   const handleLogout = () => {
     logout()
@@ -101,23 +88,14 @@ export default function Chat() {
 
     try {
       setIsLoading(true)
-      const resumeResponse = await fetch(`${API_URL}/resumes/${resume_id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      if(!resumeResponse.ok) {
-        throw new Error("Failed to fetch resume data")
-      }
-      const resumeData = await resumeResponse.json()
-      console.log("Resume Data:", resumeData);
 
       const reply = await getChatResponse(message, 'gpt-4', 'text')
       if (typeof reply !== 'string') throw new Error('Invalid response type')
 
       setMessages((prev) => [...prev, 
         { role: "user", content: message },
-        { role: "AI", content: reply }])
+        { role: "AI", content: reply }
+      ])
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
@@ -139,81 +117,56 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Sidebar */}
-      <div className={`${isSidebarOpen ? 'w-[240px]' : 'w-[60px]'} bg-gray-100/20 shadow-lg fixed h-screen z-50 transition-all duration-300`}>
-        <div className="flex justify-between items-center p-4 border-b">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="hover:bg-[#DEFFCF]/40"
-          >
-            <Menu className="w-7 h-7" />
-          </Button>
-          
-          {isSidebarOpen && (
-            <Link href="/writeResume">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-[#DEFFCF]/40"
-              >
-                <FilePen className="w-7 h-7" />
-              </Button>
-            </Link>
-          )}
-        </div>
-
-        {isSidebarOpen && (
-          <>
-            <div className="p-4">
-              <div className="space-y-2">
-                {feedbackHistory.map((feedback) => (
-                  <Link key={feedback.id} href={`/chat/${feedback.id}`}>
-                    <div className={`p-3 hover:bg-[#DEFFCF]/40 rounded-lg cursor-pointer ${
-                      feedback.id === resume_id ? 'bg-[#DEFFCF] font-bold' : ''
-                    }`}>
-                      <p className="font-medium text-sm">{feedback.company}/{feedback.position}</p>
-                      <p className="text-xs text-gray-500">{feedback.date}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="/writeResume">
+                      Write Resume
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Resume Feedback</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
-
-            <div className="absolute bottom-0 w-full p-4">
-              <div className="space-y-2">
-                <Link href="/mypage">
-                  <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-black hover:bg-[#DEFFCF]/40">
-                    <UserCircle2 className="w-5 h-5 mr-3" />
-                    My Page
-                  </Button>
-                </Link>
-                
-                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-gray-600 hover:text-black hover:bg-[#DEFFCF]/40">
-                  <LogOut className="w-5 h-5 mr-3" />
-                  Log out
-                </Button>
-              </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+              <div className="bg-muted/50 aspect-video rounded-xl" />
+              <div className="bg-muted/50 aspect-video rounded-xl" />
+              <div className="bg-muted/50 aspect-video rounded-xl" />
             </div>
-          </>
-        )}
-      </div>
+            <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
 
       {/* Main Chat Area */}
       <div className={`flex-1 flex flex-col h-screen ${isSidebarOpen ? 'ml-[240px]' : 'ml-[60px]'} transition-all duration-300`}>
         {/* Mode Toggle Header */}
         <div className="py-5 px-6 border-b bg-white">
           <div className="flex items-center gap-6 ml-6">
-            <h1 className="text-xl font-semibold text-gray-900">Feedback</h1>
+            <h1 className="text-xl font-semibold text-gray-900">Resume Feedback</h1>
           </div>
         </div>
         
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === "AI" ? "justify-start" : "justify-end"}`}>
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex ${msg.role === "AI" ? "justify-start" : "justify-end"}`}>
                 <div className={`relative max-w-[80%] ${
                   msg.role === "AI" 
                     ? "bg-[#DEFFCF]/40" 
@@ -227,7 +180,7 @@ export default function Chat() {
                   <div className="p-4">
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   </div>
-                  {msg.role === "AI" && idx === messages.length - 1 && (
+                  {msg.role === "AI" && index === messages.length - 1 && (
                     <div className="absolute bottom-2 right-2">
                       <Button 
                         variant="ghost" 
@@ -245,7 +198,7 @@ export default function Chat() {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="relative max-w-[80%] bg-gray-100 rounded-2xl">
+                <div className="relative max-w-[80%] bg-[#DEFFCF] rounded-2xl">
                   <div className="absolute -left-10 top-2">
                     <Bot className="w-6 h-6 text-gray-600" />
                   </div>
