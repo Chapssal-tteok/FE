@@ -1,9 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { UserControllerService } from "@/api-client"
+import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, useSidebar } from "@/components/ui/sidebar"
+
+interface History {
+  id: string
+  title: string
+  date: string
+}
 
 export function NavMain({
   items,
@@ -11,7 +18,6 @@ export function NavMain({
 }: {
   items: {
     title: string
-    url: string
     icon?: LucideIcon
     isActive?: boolean
     items?: {
@@ -36,6 +42,27 @@ export function NavMain({
       {} as Record<string, boolean>,
     ),
   )
+
+  const [History, setHistory] = useState<History[]>([])
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        // 자기소개서 목록 가져오기
+        const response = await UserControllerService.getMyResumes()
+        const history = response.result?.map((item) => ({
+          id: String(item.resumeId),
+          title: item.title ?? `${item.company}/${item.position}`,
+          date: new Date(item.createdAt ?? "").toLocaleDateString('ko-KR'),
+        })) || []
+        setHistory(history)
+      } catch (error) {
+        console.error("Error fetching history:", error)
+      }
+    }
+
+    fetchHistory()
+  }, [])
 
   // 현재 선택된 아이템 ID (실제로는 URL 파라미터 등에서 가져와야 함)
   const resume_id = "1" // 예시로 첫 번째 아이템을 선택된 상태로 설정
