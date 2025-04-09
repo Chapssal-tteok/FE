@@ -2,7 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type UpdateInterviewDTO = {
-    title?: string;
+export type CreateResumeDTO = {
+    title: string;
+    company: string;
+    position: string;
 };
-

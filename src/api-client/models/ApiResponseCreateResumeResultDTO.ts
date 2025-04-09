@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CreateResumeResultDTO } from '../DTO/CreateResumeResultDTO';
+import type { CreateResumeResultDTO } from './CreateResumeResultDTO';
 export type ApiResponseCreateResumeResultDTO = {
     isSuccess?: boolean;
     code?: string;

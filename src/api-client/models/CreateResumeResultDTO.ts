@@ -2,10 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type CreateInterviewResultDTO = {
-    interviewId?: number;
-    userId?: number;
+export type CreateResumeResultDTO = {
+    resumeId?: number;
+    username?: string;
     title?: string;
+    company?: string;
+    position?: string;
     createdAt?: string;
 };
 

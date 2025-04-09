@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { InterviewQaDTO } from '../DTO/InterviewQaDTO';
-export type ApiResponseInterviewQaDTO = {
+import type { ResumeDTO } from './ResumeDTO';
+export type ApiResponseResumeDTO = {
     isSuccess?: boolean;
     code?: string;
     message?: string;
-    result?: InterviewQaDTO;
+    result?: ResumeDTO;
 };
 

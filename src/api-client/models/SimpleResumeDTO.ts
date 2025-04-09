@@ -2,10 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type CreateResumeResultDTO = {
+export type SimpleResumeDTO = {
     resumeId?: number;
-    userId?: number;
+    username?: string;
     title?: string;
+    company?: string;
+    position?: string;
     createdAt?: string;
+    updatedAt?: string;
 };
 

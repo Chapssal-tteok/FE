@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ApiResponseCreateResumeResultDTO } from '../models/ApiResponse/ApiResponseCreateResumeResultDTO';
-import type { ApiResponseResumeDTO } from '../models/ApiResponse/ApiResponseResumeDTO';
-import type { ApiResponseString } from '../models/ApiResponse/ApiResponseString';
-import type { CreateResumeDTO } from '../models/DTO/CreateResumeDTO';
-import type { UpdateResumeDTO } from '../models/DTO/UpdateResumeDTO';
+import type { ApiResponseCreateResumeResultDTO } from '../models/ApiResponseCreateResumeResultDTO';
+import type { ApiResponseResumeDTO } from '../models/ApiResponseResumeDTO';
+import type { ApiResponseString } from '../models/ApiResponseString';
+import type { CreateResumeDTO } from '../models/CreateResumeDTO';
+import type { UpdateResumeDTO } from '../models/UpdateResumeDTO';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';

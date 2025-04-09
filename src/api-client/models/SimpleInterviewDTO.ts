@@ -2,12 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { InterviewQaDTO } from './InterviewQaDTO';
-export type InterviewDTO = {
+export type SimpleInterviewDTO = {
     interviewId?: number;
-    userId?: number;
+    username?: string;
     title?: string;
-    interviewQas?: Array<InterviewQaDTO>;
+    company?: string;
+    position?: string;
     createdAt?: string;
     updatedAt?: string;
 };

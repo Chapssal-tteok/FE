@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type CreateInterviewDTO = {
-    title: string;
+export type UserExistenceDTO = {
+    exists?: boolean;
 };
 

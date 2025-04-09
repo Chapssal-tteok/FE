@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ResumeDTO } from '../DTO/ResumeDTO';
-export type ApiResponseResumeDTO = {
+import type { JwtResponse } from './JwtResponse';
+export type ApiResponseJwtResponse = {
     isSuccess?: boolean;
     code?: string;
     message?: string;
-    result?: ResumeDTO;
+    result?: JwtResponse;
 };
 

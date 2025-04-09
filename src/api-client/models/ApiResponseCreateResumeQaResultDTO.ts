@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ResumeQaDTO } from '../DTO/ResumeQaDTO';
-export type ApiResponseResumeQaDTO = {
+import type { CreateResumeQaResultDTO } from './CreateResumeQaResultDTO';
+export type ApiResponseCreateResumeQaResultDTO = {
     isSuccess?: boolean;
     code?: string;
     message?: string;
-    result?: ResumeQaDTO;
+    result?: CreateResumeQaResultDTO;
 };
 

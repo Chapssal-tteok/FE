@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { RegisterResponseDTO } from '../DTO/RegisterResponseDTO';
-export type ApiResponseRegisterResponseDTO = {
+import type { UserInfoDTO } from './UserInfoDTO';
+export type ApiResponseUserInfoDTO = {
     isSuccess?: boolean;
     code?: string;
     message?: string;
-    result?: RegisterResponseDTO;
+    result?: UserInfoDTO;
 };
 

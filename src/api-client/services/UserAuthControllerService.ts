@@ -2,12 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ApiResponseJwtResponse } from '../models/ApiResponse/ApiResponseJwtResponse';
-import type { ApiResponseRegisterResponseDTO } from '../models/ApiResponse/ApiResponseRegisterResponseDTO';
-import type { ApiResponseUserInfoDTO } from '../models/ApiResponse/ApiResponseUserInfoDTO';
-import type { CreateUserDTO } from '../models/DTO/CreateUserDTO';
-import type { LoginRequestDTO } from '../models/DTO/LoginRequestDTO';
-import type { RefreshRequestDTO } from '../models/DTO/RefreshRequestDTO';
+import type { ApiResponseJwtResponse } from '../models/ApiResponseJwtResponse';
+import type { ApiResponseRegisterResponseDTO } from '../models/ApiResponseRegisterResponseDTO';
+import type { ApiResponseUserInfoDTO } from '../models/ApiResponseUserInfoDTO';
+import type { CreateUserDTO } from '../models/CreateUserDTO';
+import type { LoginRequestDTO } from '../models/LoginRequestDTO';
+import type { RefreshRequestDTO } from '../models/RefreshRequestDTO';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';

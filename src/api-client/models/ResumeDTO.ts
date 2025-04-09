@@ -5,8 +5,10 @@
 import type { ResumeQaDTO } from './ResumeQaDTO';
 export type ResumeDTO = {
     resumeId?: number;
-    userId?: number;
+    username?: string;
     title?: string;
+    company?: string;
+    position?: string;
     resumeQas?: Array<ResumeQaDTO>;
     createdAt?: string;
     updatedAt?: string;

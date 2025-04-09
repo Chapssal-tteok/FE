@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ApiResponseCreateInterviewResultDTO } from '../models/ApiResponse/ApiResponseCreateInterviewResultDTO';
-import type { ApiResponseInterviewDTO } from '../models/ApiResponse/ApiResponseInterviewDTO';
-import type { ApiResponseString } from '../models/ApiResponse/ApiResponseString';
-import type { CreateInterviewDTO } from '../models/DTO/CreateInterviewDTO';
-import type { UpdateInterviewDTO } from '../models/DTO/UpdateInterviewDTO';
+import type { ApiResponseCreateInterviewResultDTO } from '../models/ApiResponseCreateInterviewResultDTO';
+import type { ApiResponseInterviewDTO } from '../models/ApiResponseInterviewDTO';
+import type { ApiResponseString } from '../models/ApiResponseString';
+import type { CreateInterviewDTO } from '../models/CreateInterviewDTO';
+import type { UpdateInterviewDTO } from '../models/UpdateInterviewDTO';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';

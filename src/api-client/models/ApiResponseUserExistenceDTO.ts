@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { JwtResponse } from '../JwtResponse';
-export type ApiResponseJwtResponse = {
+import type { UserExistenceDTO } from './UserExistenceDTO';
+export type ApiResponseUserExistenceDTO = {
     isSuccess?: boolean;
     code?: string;
     message?: string;
-    result?: JwtResponse;
+    result?: UserExistenceDTO;
 };
 

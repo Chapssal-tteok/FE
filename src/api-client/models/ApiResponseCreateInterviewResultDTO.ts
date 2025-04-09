@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { UserInfoDTO } from '../DTO/UserInfoDTO';
-export type ApiResponseUserInfoDTO = {
+import type { CreateInterviewResultDTO } from './CreateInterviewResultDTO';
+export type ApiResponseCreateInterviewResultDTO = {
     isSuccess?: boolean;
     code?: string;
     message?: string;
-    result?: UserInfoDTO;
+    result?: CreateInterviewResultDTO;
 };
 

@@ -4,5 +4,7 @@
 /* eslint-disable */
 export type UpdateResumeDTO = {
     title?: string;
+    company?: string;
+    position?: string;
 };
 
