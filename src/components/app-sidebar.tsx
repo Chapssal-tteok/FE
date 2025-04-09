@@ -56,14 +56,12 @@ const data = {
   navMain: [
     {
       title: "Resume",
-      url: "/chat",
       icon: BookOpen,
       isActive: true,
       items: resumeHistory,
     },
     {
       title: "Interview",
-      url: "/interview",
       icon: MessageSquare,
       items: interviewHistory,
     },
