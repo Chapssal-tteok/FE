@@ -1,6 +1,7 @@
+// signup/page.tsx
 "use client" 
 
-import type React from "react"
+import { UserAuthControllerService, RegisterResponseDTO } from "@/api-client"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -10,13 +11,13 @@ import { Label } from "@/components/ui/label"
 import Image from "next/image"
 
 export default function SignUp() {
+  const [username, setUserName] = useState("")
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const router = useRouter()
-
-  const API_URL = process.env.NEXT_PUBLIC_API_URL
 
   const validatePassword = (password: string) => {
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[a-zA-Z\d]{8,}$/
@@ -25,6 +26,7 @@ export default function SignUp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrorMessage("")
 
     // 비밀번호 확인
     if(password !== confirmPassword){ 
@@ -37,30 +39,37 @@ export default function SignUp() {
       return
     }
 
-    setErrorMessage("")
-    
     // 회원가입 요청
     try{
-      const response = await fetch(`${API_URL}/signup`, {   
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      const response = await UserAuthControllerService.register({
+        username,
+        name,
+        email,
+        password,
       })
 
-      if(!response.ok){
-        throw new Error("회원가입에 실패했습니다.")
-      }
-    
-      // 회원가입 성공 후 로그인 페이지로 이동
+      const userInfo : RegisterResponseDTO | undefined = response.result
+      console.log("회원가입된 사용자:", userInfo)
+
       alert("회원가입에 성공했습니다. 로그인 해주세요.")
       router.push("/login")
-
-    } catch (error) {
-      console.error("회원가입 오류:", error)
-      alert("회원가입에 실패했습니다. 다시 시도해주세요.")
+    } catch (error: any) {
+      const message = error?.body?.message || error?.response?.data?.message || "회원가입에 실패했습니다. 다시 시도해주세요."
+      setErrorMessage(message)
+      console.error("회원가입 실패:", message)
     }
+  }
+
+  const isFormValid = () => {
+    return (
+      username.length > 0 &&
+      name.length > 0 &&
+      email.length > 0 &&
+      password.length > 0 &&
+      confirmPassword.length > 0 &&
+      validatePassword(password) &&
+      password === confirmPassword
+    )
   }
 
   return (
@@ -81,6 +90,33 @@ export default function SignUp() {
 
         <div className="max-w-md mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
+
+            <div className="space-y-1">
+              <Label htmlFor="name" className="text-sm">Name*</Label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="rounded-lg border-gray-300 bg-white"
+                placeholder="Name"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="username" className="text-sm">Id*</Label>
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUserName(e.target.value)}
+                required
+                className="rounded-lg border-gray-300 bg-white"
+                placeholder="Id"
+              />
+            </div>
+
             <div className="space-y-1">
               <Label htmlFor="email" className="text-sm">E-mail*</Label>
               <Input 
@@ -143,7 +179,9 @@ export default function SignUp() {
 
             <Button  
               type="submit" 
-              className="w-full bg-[#1A1A1A] hover:bg-[#333333] text-white rounded-lg py-6 disabled:{!validatePassword(password) || password !== confirmPassword}">
+              className="w-full bg-[#1A1A1A] hover:bg-[#333333] text-white rounded-lg py-6 disabled:{!validatePassword(password) || password !== confirmPassword}"
+              disabled={!isFormValid()}
+              >
               Sign Up
             </Button>
           </form>

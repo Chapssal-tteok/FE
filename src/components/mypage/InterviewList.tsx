@@ -8,7 +8,7 @@ import { format } from "date-fns"
 import { ko } from "date-fns/locale"
 
 interface Interview {
-  id: string
+  interview_id: string
   company: string
   position: string
   createdAt: string
@@ -31,13 +31,13 @@ const InterviewItem = memo(function InterviewItem({
       role="listitem"
     >
       <Checkbox
-        id={`interview-${interview.id}`}
+        id={`interview-${interview.interview_id}`}
         checked={isSelected}
-        onCheckedChange={() => onToggle(interview.id)}
+        onCheckedChange={() => onToggle(interview.interview_id)}
         aria-label={`${interview.company} 면접 선택`}
       />
       <Link 
-        href={`/interview/${interview.id}`} 
+        href={`/interview/${interview.interview_id}`} 
         className="flex-1 ml-4 hover:text-lime-600 transition-colors"
         aria-label={`${interview.company} ${interview.position} 면접 상세 보기`}
       >
@@ -95,9 +95,9 @@ export function InterviewList({ interviews, onDelete }: InterviewListProps) {
         <ul className="space-y-2" role="list">
           {interviews.map((interview) => (
             <InterviewItem
-              key={interview.id}
+              key={interview.interview_id}
               interview={interview}
-              isSelected={selectedInterviews.includes(interview.id)}
+              isSelected={selectedInterviews.includes(interview.interview_id)}
               onToggle={toggleSelection}
             />
           ))}

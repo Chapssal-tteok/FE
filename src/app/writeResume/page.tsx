@@ -1,5 +1,8 @@
+// writeResume/page.tsx
 "use client"
 
+import { ResumeControllerService, ResumeQaControllerService } from "@/api-client"
+import type { CreateResumeDTO, CreateResumeQaDTO } from "@/api-client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -23,8 +26,6 @@ export default function NewResume() {
   const { isLoggedIn, logout } = useAuth()
   const router = useRouter()
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL
-
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/login")
@@ -38,20 +39,10 @@ export default function NewResume() {
     router.push("/")
   }
 
+  const [title, setTitle] = useState("")
   const [company, setCompany] = useState("")
   const [position, setPosition] = useState("")
   const [questions, setQuestions] = useState<Question[]>([{ id: 1, question: "", answer: "" }])
-
-  const addQuestion = () => {
-    const newId = questions.length + 1
-    setQuestions([...questions, { id: newId, question: "", answer: "" }])
-  }
-
-  const deleteQuestion = (id: number) => {
-    if (questions.length > 1) {
-      setQuestions(questions.filter((q) => q.id !== id))
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,29 +61,49 @@ export default function NewResume() {
     }
 
     try {
-      // 서버로 데이터 전송
-      const response = await fetch(`${API_URL}/resumes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ company, position, questions })
-      })
-
-      if (!response.ok) {
-        throw new Error("서버 오류 발생")
+      // 새 자기소개서 생성
+      const createResumeRequest: CreateResumeDTO = {
+        title,
+        company,
+        position,
       }
 
-      const result = await response.json()
-      console.log("제출 완료:", result)
+      const resumeResponse = await ResumeControllerService.createResume(createResumeRequest)
+      const resumeId = resumeResponse.result?.resumeId
+
+      if(!resumeId) {
+        throw new Error("자기소개서 생성 실패")
+      }
+
+      // 문항 및 답변 생성
+      for (const [index, q] of questions.entries()) {
+        const createResumeQaRequest: CreateResumeQaDTO = {
+          number: index + 1,
+          question: q.question,
+          answer: q.answer,
+        };
+  
+        await ResumeQaControllerService.createResumeQa(resumeId, createResumeQaRequest);
+      }
+
       // 생성된 ID 기반으로 채팅 페이지 이동
-      router.push(`/chat/${result.id}`)
+      router.push(`/chat/${resumeId}`)
     } catch (error) {
       console.error("제출 실패:", error)
       alert("제출 중 오류가 발생했습니다.")
     }
   }
 
+  const addQuestion = () => {
+    const newId = questions.length + 1
+    setQuestions([...questions, { id: newId, question: "", answer: "" }])
+  }
+
+  const deleteQuestion = (id: number) => {
+    if (questions.length > 1) {
+      setQuestions(questions.filter((q) => q.id !== id))
+    }
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden p-4">
@@ -123,6 +134,15 @@ export default function NewResume() {
         <Card className="bg-[#DEFFCF]/50 backdrop-blur-xs rounded-3xl">
           <CardContent className="p-6 ">
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <Label htmlFor="title">제목</Label>
+                <Input id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="bg-white/80"
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="company">회사명</Label>

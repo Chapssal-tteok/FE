@@ -1,5 +1,7 @@
+// login/page.tsx
 "use client"
 
+import { UserAuthControllerService, LoginRequestDTO } from "@/api-client"
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
@@ -12,42 +14,46 @@ import { useAuth } from "../../contexts/AuthContext"
 import Image from "next/image"
 
 export default function LogIn() {
-  const [email, setEmail] = useState("")
+  const [username, setUserName] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const { login } = useAuth()
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    try{
-      const response = await fetch(`${API_URL}/login`, {   
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
+  
+    const requestBody: LoginRequestDTO = { username, password }
+  
+    try {
+      const response = await UserAuthControllerService.login(requestBody)
+  
+      const result = response.result
 
-      if(!response.ok){
-        throw new Error("로그인에 실패했습니다.")
+      if (!response.isSuccess || !result || !result.accessToken || !result.username) {
+        throw new Error(response.message || "로그인에 실패했습니다.")
       }
 
-      const data = await response.json() // 토큰 응답 받기
-      login(data.token, data.user) // 토큰 및 사용자 정보 저장
+      const token: string = result.accessToken
+      const username = result.username
 
-      // 로그인 후 자소서 작성 페이지로 이동
+      login(token, { username })
+  
       alert("로그인에 성공했습니다.")
       router.push("/")
-
-    } catch (error) {
+    } catch (error: any) {
       console.error("로그인 오류:", error)
-      alert("로그인에 실패했습니다. 다시 시도해주세요.")
+  
+      const message =
+        error?.body?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "로그인에 실패했습니다. 다시 시도해주세요."
+  
+      alert(message)
     }
   }
+  
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-white p-4 overflow-hidden">
@@ -68,12 +74,12 @@ export default function LogIn() {
         <div className="max-w-md mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-1">
-              <Label htmlFor="email" className="text-sm">E-mail*</Label>
+              <Label htmlFor="username" className="text-sm">ID*</Label>
               <Input 
-                id="email" 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
+                id="username" 
+                type="text" 
+                value={username} 
+                onChange={(e) => setUserName(e.target.value)} 
                 required 
                 className="rounded-lg border-gray-300 bg-white"
                 placeholder="E-mail"
