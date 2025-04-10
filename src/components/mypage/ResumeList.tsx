@@ -8,7 +8,7 @@ import { format } from "date-fns"
 import { ko } from "date-fns/locale"
 
 interface Resume {
-  id: string
+  resume_id: string
   company: string
   position: string
   createdAt: string
@@ -31,14 +31,14 @@ const ResumeItem = memo(function ResumeItem({
       role="listitem"
     >
       <Checkbox
-        id={`resume-${resume.id}`}
+        id={`resume-${resume.resume_id}`}
         checked={isSelected}
-        onCheckedChange={() => onToggle(resume.id)}
+        onCheckedChange={() => onToggle(resume.resume_id)}
         aria-label={`${resume.company} 자기소개서 선택`}
       />
       <div className="flex-1 ml-4">
         <Link 
-          href={`/resume/${resume.id}`}
+          href={`/resume/${resume.resume_id}`}
           className="block hover:text-lime-600 transition-colors"
           aria-label={`${resume.company} ${resume.position} 자기소개서 상세 보기`}
         >
@@ -50,7 +50,7 @@ const ResumeItem = memo(function ResumeItem({
         </Link>
       </div>
       <Link 
-        href={`/chat/${resume.id}`}
+        href={`/chat/${resume.resume_id}`}
         className="ml-4"
         aria-label={`${resume.company} 자기소개서 피드백 받기`}
       >
@@ -119,9 +119,9 @@ export function ResumeList({ resumes, onDelete }: ResumeListProps) {
         <ul className="space-y-2" role="list">
           {resumes.map((resume) => (
             <ResumeItem
-              key={resume.id}
+              key={resume.resume_id}
               resume={resume}
-              isSelected={selectedResumes.includes(resume.id)}
+              isSelected={selectedResumes.includes(resume.resume_id)}
               onToggle={toggleSelection}
             />
           ))}
