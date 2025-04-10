@@ -6,13 +6,13 @@ import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { useAuth } from "@/contexts/AuthContext"
 import { RefreshCw, Send, Bot, Video } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
 import { analyzeResume, getChatResponse } from "@/services/openaiService"
 
 interface Message {
@@ -22,17 +22,22 @@ interface Message {
 
 export default function Chat() {
   const { id: resume_id } = useParams()
+  const { isLoggedIn } = useAuth()
+  const router = useRouter()
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const { logout } = useAuth()
-  const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push("/login")
+    }
+  }, [isLoggedIn, router])
 
   useEffect(() => {
     scrollToBottom()
@@ -78,11 +83,6 @@ export default function Chat() {
     fetchInitialMessages()
   }, [resume_id])
 
-  const handleLogout = () => {
-    logout()
-    router.push("/")
-  }
-
   const handleSendMessage = async () => {
     if(!message.trim()) return
 
@@ -117,6 +117,7 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Sidebar */}
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
@@ -154,7 +155,7 @@ export default function Chat() {
       </SidebarProvider>
 
       {/* Main Chat Area */}
-      <div className={`flex-1 flex flex-col h-screen ${isSidebarOpen ? 'ml-[240px]' : 'ml-[60px]'} transition-all duration-300`}>
+      <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>
         {/* Mode Toggle Header */}
         <div className="py-5 px-6 border-b bg-white">
           <div className="flex items-center gap-6 ml-6">
