@@ -1,5 +1,7 @@
+// resume/[id]/page.tsx
 "use client"
 
+import { ResumeControllerService } from "@/api-client"
 import { useEffect, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -11,6 +13,7 @@ import Image from "next/image"
 
 interface Resume {
   id: string
+  title: string
   company: string
   position: string
   content: string
@@ -24,22 +27,30 @@ export default function ResumePage() {
   const [ resume, setResume ] = useState<Resume | null>(null)
   const [ loading, setLoading ] = useState(true)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL
-
   const fetchResume = useCallback(async (resume_id: string) => {
     try {
-      const response = await fetch(`${API_URL}/resume/${resume_id}`)
-      if(!response.ok) {
+      const response = await ResumeControllerService.getResume(Number(resume_id))
+
+      if(!response || !response.result) {
         throw new Error("Failed to fetch resume data")
       }
-      const data = await response.json()
-      setResume(data)
+
+      const { resumeId, title, createdAt } = response.result
+      
+      setResume({
+        id: resumeId?.toString() ?? "",
+        title: title ?? "제목 없음",
+        company: "",
+        position: "",
+        content: "",
+        createdAt: createdAt ?? ""
+      })
     } catch (error) {
       console.error(error)
     } finally {
       setLoading(false)
     }
-  }, [API_URL])
+  }, [])
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -95,9 +106,10 @@ export default function ResumePage() {
         <Card className="bg-[#DEFFCF]/40 backdrop-blur-xs rounded-3xl">
           <CardContent>
             <div className="flex items-center justify-start space-x-2 mb-4">
-              <h2 className="text-xl font-bold text-gray-800">{resume.company}</h2>
-              <h2 className="text-xl font-semibold text-gray-700">{resume.position}</h2>
-              <span className="text-sm text-gray-500 ml-auto">{resume.createdAt}</span>
+              <h2 className="text-xl font-bold text-gray-800">{resume.title ?? "자기소개서"}</h2>
+              <span className="text-sm text-gray-500 ml-auto">
+                {resume.createdAt ? new Date(resume.createdAt).toLocaleString() : ""}
+              </span>
             </div>
           
             <div className="prose max-w-none">
