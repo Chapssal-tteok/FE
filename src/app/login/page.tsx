@@ -36,8 +36,10 @@ export default function LogIn() {
 
       const token: string = result.accessToken
       const username = result.username
-
-      login(token, { username })
+      const email = ""
+      const name = ""
+      
+      login(token, { username, email, name })
   
       alert("로그인에 성공했습니다.")
       router.push("/")

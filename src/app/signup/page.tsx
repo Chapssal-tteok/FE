@@ -25,38 +25,43 @@ export default function SignUp() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrorMessage("")
+    e.preventDefault();
+    setErrorMessage("");
 
-    // 비밀번호 확인
-    if(password !== confirmPassword){ 
-      alert("비밀번호가 일치하지 않습니다.")
-      return
+    if (password !== confirmPassword) {
+      alert("비밀번호가 일치하지 않습니다.");
+      return;
     }
 
-    if(!validatePassword(password)){
-      alert("비밀번호는 영문과 숫자를 포함하고, 최소 8자 이상이어야 합니다.")
-      return
+    if (!validatePassword(password)) {
+      alert("비밀번호는 영문과 숫자를 포함하고, 최소 8자 이상이어야 합니다.");
+      return;
     }
 
-    // 회원가입 요청
-    try{
+    try {
+      console.log("회원가입 요청 URL:", UserAuthControllerService.register.name);
+      console.log("회원가입 요청 데이터:", { username, name, email, password });
+
       const response = await UserAuthControllerService.register({
         username,
         name,
         email,
         password,
-      })
+      });
 
-      const userInfo : RegisterResponseDTO | undefined = response.result
-      console.log("회원가입된 사용자:", userInfo)
+      const userInfo: RegisterResponseDTO | undefined = response.result;
+      console.log("회원가입된 사용자:", userInfo);
 
-      alert("회원가입에 성공했습니다. 로그인 해주세요.")
-      router.push("/login")
+      alert("회원가입에 성공했습니다. 로그인 해주세요.");
+      router.push("/login");
     } catch (error: any) {
-      const message = error?.body?.message || error?.response?.data?.message || "회원가입에 실패했습니다. 다시 시도해주세요."
-      setErrorMessage(message)
-      console.error("회원가입 실패:", message)
+      console.log("회원가입 실패:", error);
+      const message =
+        error?.body?.message ||
+        error?.response?.data?.message ||
+        "회원가입에 실패했습니다. 다시 시도해주세요.";
+      setErrorMessage(message);
+      console.error("회원가입 실패:", message);
     }
   }
 
@@ -89,7 +94,7 @@ export default function SignUp() {
         </div>
 
         <div className="max-w-md mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-2">
 
             <div className="space-y-1">
               <Label htmlFor="name" className="text-sm">Name*</Label>
