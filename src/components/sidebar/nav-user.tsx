@@ -1,7 +1,8 @@
 "use client"
 
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
 import { ChevronsUpDown, LogOut, Sparkles } from "lucide-react"
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -25,12 +26,15 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { state } = useSidebar()
+  const router = useRouter()
+  const { isLoggedIn, logout } = useAuth()
   const isCollapsed = state === "collapsed"
 
-  // 로그아웃 핸들러 (실제 구현은 앱에 맞게 조정 필요)
   const handleLogout = () => {
     console.log("Logging out...")
-    // 로그아웃 로직 구현
+    logout()
+    console.log("After logout:", { isLoggedIn })
+    router.push("/")
   }
 
   return (
