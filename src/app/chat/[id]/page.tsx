@@ -143,26 +143,11 @@ export default function Chat() {
               </Breadcrumb>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-              <div className="bg-muted/50 aspect-video rounded-xl" />
-              <div className="bg-muted/50 aspect-video rounded-xl" />
-              <div className="bg-muted/50 aspect-video rounded-xl" />
-            </div>
-            <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
-          </div>
         </SidebarInset>
       </SidebarProvider>
 
       {/* Main Chat Area */}
-      <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>
-        {/* Mode Toggle Header */}
-        <div className="py-5 px-6 border-b bg-white">
-          <div className="flex items-center gap-6 ml-6">
-            <h1 className="text-xl font-semibold text-gray-900">Resume Feedback</h1>
-          </div>
-        </div>
-        
+      <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>       
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-3xl mx-auto space-y-6">

@@ -293,8 +293,9 @@ export default function InterviewPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center justify-between w-full px-4">
+            <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator
                 orientation="vertical"
@@ -309,43 +310,27 @@ export default function InterviewPage() {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>Resume Feedback</BreadcrumbPage>
+                    <BreadcrumbPage>Interview</BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-          </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-              <div className="bg-muted/50 aspect-video rounded-xl" />
-              <div className="bg-muted/50 aspect-video rounded-xl" />
-              <div className="bg-muted/50 aspect-video rounded-xl" />
-            </div>
-            <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-
-      {/* Main Chat Area */}
-      <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>
-        {/* Mode Toggle Header */}
-        <div className="py-4 px-6 border-b bg-white">
-          <div className="flex items-center gap-6 ml-6">
-            <h1 className="text-xl font-semibold text-gray-900">Interview</h1>
+            
+            {/*모드 전환 버튼 */}
             <div className="flex gap-2">
               <Button
                 type="button"
                 //onClick={toggleVoiceMode}
                 variant="outline"
-                className="rounded-full px-4 py-2 flex items-center gap-2 text-sm hover:bg-[#DEFFCF]/40"
-                >
+                className="rounded-full px-3 py-1.5 flex items-center gap-1 text-xs hover:bg-[#DEFFCF]/40"
+              >
                 {isVoiceMode ? (
                   <>
                     <Volume2 className="w-4 h-4" />
                     음성 모드
                   </>
                 ) : (
-                <>
+                  <>
                     <MicOff className="w-4 h-4" />
                     텍스트 모드
                   </>
@@ -357,7 +342,7 @@ export default function InterviewPage() {
                   //onClick={isListening ? stopListening : startListening}
                   disabled={isLoading}
                   variant={isListening ? "default" : "outline"}
-                  className="rounded-full px-4 py-2 flex items-center gap-2 text-sm hover:bg-[#DEFFCF]/40"
+                  className="rounded-full px-3 py-1.5 flex items-center gap-1 text-xs hover:bg-[#DEFFCF]/40"
                 >
                   <Mic className="w-4 h-4" />
                   {isListening ? "녹음 중지" : "음성 녹음"}
@@ -365,8 +350,12 @@ export default function InterviewPage() {
               )}
             </div>
           </div>
-        </div>
+        </header>
+        </SidebarInset>
+      </SidebarProvider>
 
+      {/* Main Chat Area */}
+      <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-3xl mx-auto space-y-6">

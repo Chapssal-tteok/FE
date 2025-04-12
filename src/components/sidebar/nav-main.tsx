@@ -1,10 +1,10 @@
+// components/sidebar/nav-main.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronRight, type LucideIcon } from "lucide-react"
-import { UserControllerService } from "@/api-client"
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -13,13 +13,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-interface ResumeHistory {
+export interface ResumeHistory {
   id: string
   title: string
   date: string
 }
 
-interface InterviewHistory {
+export interface InterviewHistory {
   id: string
   title: string
   date: string
@@ -33,6 +33,7 @@ export function NavMain({
     title: string
     icon?: LucideIcon
     isActive?: boolean
+    items: ResumeHistory[] | InterviewHistory[]
   }[]
   onItemClick?: () => void
 }) {
@@ -49,46 +50,6 @@ export function NavMain({
       return acc
     }, {} as Record<string, boolean>)
   )
-
-  const [resumeHistory, setResumeHistory] = useState<ResumeHistory[]>([])
-  const [interviewHistory, setInterviewHistory] = useState<InterviewHistory[]>([])
-
-  useEffect(() => {
-    const fetchResumeHistory = async () => {
-      try {
-        const response = await UserControllerService.getMyResumes()
-        const resumeData = response.result || []
-        setResumeHistory(
-          resumeData.map((item) => ({
-            id: String(item.resumeId),
-            title: item.title || `${item.company}/${item.position}`,
-            date: new Date(item.createdAt ?? "").toLocaleDateString(),
-          }))
-        )
-      } catch (error) {
-        console.error("Error fetching resume history:", error)
-      }
-    }
-
-    const fetchInterviewHistory = async () => {
-      try {
-        const response = await UserControllerService.getMyInterviews()
-        const interviewData = response.result || []
-        setInterviewHistory(
-          interviewData.map((item) => ({
-            id: String(item.interviewId),
-            title: item.title || `${item.company}/${item.position}`,
-            date: new Date(item.createdAt ?? "").toLocaleDateString(),
-          }))
-        )
-      } catch (error) {
-        console.error("Failed to fetch interview history:", error)
-      }
-    }
-
-    fetchResumeHistory()
-    fetchInterviewHistory()
-  }, [])
 
   const toggleSection = (title: string) => {
     if (onItemClick && isCollapsed) {
@@ -129,7 +90,7 @@ export function NavMain({
             <SidebarMenuSub>
               <div className="space-y-2 px-2 py-1">
                 {item.title === "Resume" &&
-                  resumeHistory.map((resume) => (
+                  item.items.map((resume) => (
                     <Link key={resume.id} href={`/chat/${resume.id}`}>
                       <div
                         className={`p-3 hover:bg-[#DEFFCF]/40 rounded-lg cursor-pointer ${
@@ -143,7 +104,7 @@ export function NavMain({
                   ))}
 
                 {item.title === "Interview" &&
-                  interviewHistory.map((interview) => (
+                  item.items.map((interview) => (
                     <Link key={interview.id} href={`/interview/${interview.id}`}>
                       <div
                         className={`p-3 hover:bg-[#DEFFCF]/40 rounded-lg cursor-pointer ${

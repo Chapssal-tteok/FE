@@ -11,7 +11,6 @@ const passwordSchema = z.object({
   currentPassword: z.string().min(1, "현재 비밀번호를 입력해주세요"),
   newPassword: z.string()
     .min(8, "새 비밀번호는 최소 8자 이상이어야 합니다")
-    .regex(/[A-Z]/, "대문자를 포함해야 합니다")
     .regex(/[a-z]/, "소문자를 포함해야 합니다")
     .regex(/[0-9]/, "숫자를 포함해야 합니다"),
   confirmNewPassword: z.string()

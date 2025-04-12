@@ -124,7 +124,7 @@ export default function MyPage() {
     }
   }
 
-  // 회원 탈퇴 처리 -> api-client에 회원 탈퇴 API 추가 후 사용
+  // 회원 탈퇴 처리 -> 회원 탈퇴 API 추가 후 사용
   // const handleAccountDelete = async (password: string) => {
   //   try {
   //     if (!user) throw new Error("User not found")

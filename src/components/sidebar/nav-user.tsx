@@ -1,8 +1,8 @@
 "use client"
 
-import { ChevronsUpDown, LogOut, Sparkles } from "lucide-react"
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
+import { ChevronsUpDown, LogOut, Sparkles, User } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,19 +18,21 @@ export function NavUser({
   user,
 }: {
   user: {
-    name: string
+    id: string
     email: string
-    avatar: string
   }
 }) {
   const { isMobile } = useSidebar()
   const { state } = useSidebar()
+  const router = useRouter()
+  const { isLoggedIn, logout } = useAuth()
   const isCollapsed = state === "collapsed"
 
-  // 로그아웃 핸들러 (실제 구현은 앱에 맞게 조정 필요)
   const handleLogout = () => {
     console.log("Logging out...")
-    // 로그아웃 로직 구현
+    logout()
+    console.log("After logout:", { isLoggedIn })
+    router.push("/")
   }
 
   return (
@@ -43,14 +45,11 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className={`flex items-center justify-center ${isCollapsed ? "mx-auto" : ""}`}>
-                <Avatar className={`${isCollapsed ? "h-6 w-6" : "h-8 w-8"} rounded-lg`}>
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
+                <User className={`h-4 w-4 ${isCollapsed ? "mx-auto" : ""}`} />
               </div>
               {!isCollapsed && (
                 <div className="grid flex-1 text-left text-sm leading-tight ml-2">
-                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate font-semibold">{user.id}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               )}
@@ -65,12 +64,9 @@ export function NavUser({
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
+                <User className="h-6 w-6 flex-shrink-0" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate font-semibold">{user.id}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
