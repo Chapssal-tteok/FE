@@ -84,7 +84,7 @@ export default function LogIn() {
                 onChange={(e) => setUserName(e.target.value)} 
                 required 
                 className="rounded-lg border-gray-300 bg-white"
-                placeholder="E-mail"
+                placeholder="ID"
               />
             </div>
 
