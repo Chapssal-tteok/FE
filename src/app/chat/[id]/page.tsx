@@ -13,7 +13,8 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { RefreshCw, Send, Bot, Video } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
-import { analyzeResume, getChatResponse } from "@/services/openaiService"
+import { analyzeResume } from "@/lib/analyzeResumeClient"
+import { getChatResponse } from "@/lib/getChatResponse"
 
 interface Message {
   role: "user" | "AI"
@@ -70,7 +71,7 @@ export default function Chat() {
         // 초기 메시지 설정
         setMessages([
           { role: "AI", content: "안녕하세요! 자기소개서 분석을 도와드리겠습니다." },
-          { role: "AI", content: feedback || "자기소개서 분석이 완료되었습니다." }
+          { role: "AI", content: Array.isArray(feedback) ? feedback.join("\n") : feedback || "자기소개서 분석이 완료되었습니다." }
         ])
       } catch (error) {
         console.error("Error fetching feedback", error)
@@ -121,6 +122,7 @@ export default function Chat() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
+          {/* Header (Breadcrumb 포함) */}
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
@@ -131,9 +133,7 @@ export default function Chat() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/writeResume">
-                      Write Resume
-                    </BreadcrumbLink>
+                    <BreadcrumbLink href="/writeResume">Write Resume</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
@@ -143,92 +143,87 @@ export default function Chat() {
               </Breadcrumb>
             </div>
           </header>
-        </SidebarInset>
-      </SidebarProvider>
-
-      {/* Main Chat Area */}
-      <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>       
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.role === "AI" ? "justify-start" : "justify-end"}`}>
-                <div className={`relative max-w-[80%] ${
-                  msg.role === "AI" 
-                    ? "bg-[#DEFFCF]/40" 
-                    : "bg-lime-300"
-                } rounded-2xl`}>
-                  {msg.role === "AI" && (
-                    <div className="absolute -left-10 top-2">
-                      <Bot className="w-6 h-6 text-lime-600" />
+  
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col transition-all duration-300">
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {messages.map((msg, index) => (
+                  <div key={index} className={`flex ${msg.role === "AI" ? "justify-start" : "justify-end"}`}>
+                    <div className={`relative max-w-[80%] ${msg.role === "AI" ? "bg-[#DEFFCF]/40" : "bg-lime-300"} rounded-2xl`}>
+                      {msg.role === "AI" && (
+                        <div className="absolute -left-10 top-2">
+                          <Bot className="w-6 h-6 text-lime-600" />
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      </div>
+                      {msg.role === "AI" && index === messages.length - 1 && (
+                        <div className="absolute bottom-2 right-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setMessages([])}
+                            disabled={isLoading}
+                            className="h-6 w-6 hover:bg-[#DEFFCF]"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div className="p-4">
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
                   </div>
-                  {msg.role === "AI" && index === messages.length - 1 && (
-                    <div className="absolute bottom-2 right-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => setMessages([])}
-                        disabled={isLoading}
-                        className="h-6 w-6 hover:bg-[#DEFFCF]"
-                      >
-                        <RefreshCw className="w-3 h-3" />
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="relative max-w-[80%] bg-[#DEFFCF] rounded-2xl">
+                      <div className="absolute -left-10 top-2">
+                        <Bot className="w-6 h-6 text-gray-600" />
+                      </div>
+                      <div className="p-4">
+                        <p>답변을 생성하는 중...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+  
+            {/* Input Area */}
+            <div className="p-6 bg-white">
+              <div className="max-w-3xl mx-auto">
+                <div className="flex gap-3">
+                  <Textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="궁금한 점을 물어보세요"
+                    className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
+                    disabled={isLoading}
+                  />
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      className="bg-lime-500 hover:bg-lime-600 rounded-full px-6" 
+                      onClick={handleSendMessage}
+                      disabled={isLoading}
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                    <Link href={`/interview/${resume_id}`}>
+                      <Button className="bg-lime-500 hover:bg-lime-600 rounded-full px-6">
+                        <Video className="w-4 h-4" />
                       </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="relative max-w-[80%] bg-[#DEFFCF] rounded-2xl">
-                  <div className="absolute -left-10 top-2">
-                    <Bot className="w-6 h-6 text-gray-600" />
-                  </div>
-                  <div className="p-4">
-                    <p>답변을 생성하는 중...</p>
+                    </Link>
                   </div>
                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Input Area */}
-        <div className="p-6 bg-white">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex gap-3">
-              <Textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="궁금한 점을 물어보세요"
-                className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
-                disabled={isLoading}
-              />
-              <div className="flex flex-col gap-3">
-                <Button 
-                  className="bg-lime-500 hover:bg-lime-600 rounded-full px-6" 
-                  onClick={handleSendMessage}
-                  disabled={isLoading}>
-                  <Send className="w-4 h-4" />
-                </Button>
-                <Link href={`/interview/${resume_id}`}>
-                  <Button 
-                    className="bg-lime-500 hover:bg-lime-600 rounded-full px-6"
-                  >
-                    <Video className="w-4 h-4" />
-                  </Button>
-                </Link>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </SidebarInset>
+      </SidebarProvider>
     </div>
-  )
+  )  
 }
