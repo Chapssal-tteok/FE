@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { Send, Mic, MicOff, Volume2, File, RefreshCw } from "lucide-react"
-import { generateInterviewQuestions, analyzeAnswer, generateFollowUpQuestions } from '@/services/interviewService'
+import { generateInterviewQuestions, analyzeAnswer, generateFollowUpQuestions } from "@/lib/interviewClient"
 
 interface Question {
   _id: string
@@ -66,7 +66,7 @@ export default function InterviewPage() {
     setIsLoading(true)
     try {
       const response = await InterviewControllerService.getInterview(Number(interview_id))
-      const data = await response.result
+      const data = response.result
 
       if(!data) {
         console.error("No interview data found")
@@ -79,7 +79,11 @@ export default function InterviewPage() {
           data.position || "",
           data.title || ""
         )
-        data.interviewQas = generatedQuestions
+        data.interviewQas = generatedQuestions.map((question, index) => ({
+          interviewQaId: index + 1, // Assign a numeric ID (e.g., index + 1)
+          question,
+          answer: "",
+        }))
       }
       
       setInterview({
@@ -149,6 +153,7 @@ export default function InterviewPage() {
 
     setIsLoading(true)
     const currentQuestion = interview.questions[interview.currentQuestionIndex]
+    if (!currentQuestion) return
 
     try {
       // 자기소개서 데이터 가져오기
@@ -162,13 +167,22 @@ export default function InterviewPage() {
       const combinedContent = resumeQas
         ? resumeQas.map((qa, index) => `문항 ${index + 1}: ${qa.question}\n답변: ${qa.answer}`).join('\n\n')
         : "자기소개서 문항이 없습니다.";
+
       // 답변 분석 및 피드백 생성
-      const feedback = await analyzeAnswer(
+      const feedbackResponse = await analyzeAnswer(
         currentQuestion.question,
         input,
         combinedContent
       )
-      setFeedback(feedback)
+      const feedback: InterviewFeedback = typeof feedbackResponse === "string"
+        ? JSON.parse(feedbackResponse)
+        : feedbackResponse
+      setFeedback({
+        strengths: feedback.strengths || [],
+        areasForImprovement: feedback.areasForImprovement || [],
+        suggestions: feedback.suggestions || [],
+        score: feedback.score || 0,
+      })
 
       // 추가 질문 생성
       const followUps = await generateFollowUpQuestions(
@@ -293,9 +307,9 @@ export default function InterviewPage() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center justify-between w-full px-4">
-            <div className="flex items-center gap-2">
+          {/* Header (Breadcrumb 포함) */}
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator
                 orientation="vertical"
@@ -304,9 +318,7 @@ export default function InterviewPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/writeResume">
-                      Write Resume
-                    </BreadcrumbLink>
+                    <BreadcrumbLink href="/writeResume">Chat</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
@@ -315,12 +327,11 @@ export default function InterviewPage() {
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            
-            {/*모드 전환 버튼 */}
+            {/* 모드 전환 버튼 */}
             <div className="flex gap-2">
               <Button
                 type="button"
-                //onClick={toggleVoiceMode}
+                // onClick={toggleVoiceMode}
                 variant="outline"
                 className="rounded-full px-3 py-1.5 flex items-center gap-1 text-xs hover:bg-[#DEFFCF]/40"
               >
@@ -339,7 +350,7 @@ export default function InterviewPage() {
               {isVoiceMode && (
                 <Button
                   type="button"
-                  //onClick={isListening ? stopListening : startListening}
+                  // onClick={isListening ? stopListening : startListening}
                   disabled={isLoading}
                   variant={isListening ? "default" : "outline"}
                   className="rounded-full px-3 py-1.5 flex items-center gap-1 text-xs hover:bg-[#DEFFCF]/40"
@@ -349,160 +360,157 @@ export default function InterviewPage() {
                 </Button>
               )}
             </div>
+          </header>
+          {/* Main Chat Area */}
+          <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {interview.questions.map((q, index) => (
+                  <div key={q._id} className="space-y-4">
+                    {/* 질문 */}
+                    <div className="flex justify-start">
+                      <div className="relative max-w-[80%] bg-[#DEFFCF]/40 rounded-2xl">
+                        <div className="p-4">
+                          <p className="font-medium mb-1">Q{index + 1}:</p>
+                          <p className="whitespace-pre-wrap">{q.question}</p>
+                        </div>
+                        <div className="absolute bottom-2 right-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setFeedback(null)} // 질문 재생성 코드-> 맞는지 확인하기
+                            disabled={isLoading}
+                            className="h-6 w-6 hover:bg-[#DEFFCF]"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 답변 */}
+                    {q.answer && (
+                      <div className="flex justify-end">
+                        <div className="relative max-w-[80%] bg-lime-300 rounded-2xl">
+                          <div className="p-4">
+                            <p className="whitespace-pre-wrap">{q.answer}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 피드백 */}
+                    {feedback && (
+                      <div className="flex justify-center">
+                        <div className="w-[90%] bg-white border-2 border-[#DEFFCF] rounded-xl shadow-sm">
+                          <div className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-semibold text-gray-700">피드백</p>
+                              <div className="flex items-center gap-2">
+                                <div className="px-3 py-1 bg-[#DEFFCF] rounded-full text-sm text-gray-600">
+                                  Q{index + 1}
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => toggleFollowUpQuestions(q._id)}
+                                  className="hover:bg-[#DEFFCF]/40"
+                                >
+                                  추가 질문
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* 피드백 텍스트 */}
+                            <div className="space-y-2">
+                              <div>
+                                <p className="font-medium text-gray-700">강점:</p>
+                                <p className="text-gray-600">{feedback.strengths.join(', ')}</p>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-700">개선점:</p>
+                                <p className="text-gray-600">{feedback.areasForImprovement.join(', ')}</p>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-700">제안:</p>
+                                <p className="text-gray-600">{feedback.suggestions.join(', ')}</p>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-700">점수:</p>
+                                <p className="text-gray-600">{feedback.score}/100</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 추가 질문 */}
+                    {showFollowUpQuestions[q._id] && followUpQuestions && followUpQuestions.length > 0 && (
+                      <div className="flex justify-start">
+                        <div className="relative max-w-[80%] bg-[#DEFFCF]/40 rounded-2xl">
+                          <div className="p-4">
+                            <p className="font-medium mb-2">추가 질문:</p>
+                            {followUpQuestions.map((followUp, i) => (
+                              <p key={i} className="whitespace-pre-wrap mb-2">
+                                • {followUp}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="relative max-w-[80%] bg-[#DEFFCF] rounded-2xl">
+                      <div className="p-4">
+                        <p>답변을 생성하는 중...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+
+            {/* Input Area */}
+            <div className="p-6 bg-white">
+              <div className="max-w-3xl mx-auto">
+                {interview.currentQuestionIndex < interview.questions.length && (
+                  <form onSubmit={handleSubmit} className="flex gap-3">
+                    <Textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="답변을 입력하세요"
+                      className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
+                      disabled={isLoading || isListening}
+                    />
+                    <div className="flex flex-col gap-3">
+                      <Button
+                        type="submit"
+                        className="bg-lime-500 hover:bg-lime-600 rounded-full px-6"
+                        disabled={isLoading || isListening}
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                      <Link href={`/chat/${interview_id}`}>
+                        <Button className="bg-lime-500 hover:bg-lime-600 rounded-full px-6">
+                          <File className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
           </div>
-        </header>
+          <audio ref={audioRef} className="hidden" />
         </SidebarInset>
       </SidebarProvider>
-
-      {/* Main Chat Area */}
-      <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto space-y-6">
-            {interview.questions.map((q, index) => (
-              <div key={q._id} className="space-y-4">
-                {/* 질문 */}
-                <div className="flex justify-start">
-                  <div className="relative max-w-[80%] bg-[#DEFFCF]/40 rounded-2xl">
-                    <div className="p-4">
-                      <p className="font-medium mb-1">Q{index + 1}:</p>
-                      <p className="whitespace-pre-wrap">{q.question}</p>
-                    </div>
-                    <div className="absolute bottom-2 right-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => setFeedback(null)} // 질문 재생성 코드-> 맞는지 확인하기
-                        disabled={isLoading}
-                        className="h-6 w-6 hover:bg-[#DEFFCF]"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 답변 */}
-                {q.answer && (
-                  <div className="flex justify-end">
-                    <div className="relative max-w-[80%] bg-lime-300 rounded-2xl">
-                      <div className="p-4">
-                        <p className="whitespace-pre-wrap">{q.answer}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 피드백 */}
-                {feedback && (
-                  <div className="flex justify-center">
-                    <div className="w-[90%] bg-white border-2 border-[#DEFFCF] rounded-xl shadow-sm">
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-semibold text-gray-700">피드백</p>
-                          <div className="flex items-center gap-2">
-                            <div className="px-3 py-1 bg-[#DEFFCF] rounded-full text-sm text-gray-600">
-                              Q{index + 1}
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => toggleFollowUpQuestions(q._id)}
-                              className="hover:bg-[#DEFFCF]/40"
-                            >
-                              추가 질문
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* 피드백 텍스트 */}
-                        <div className="space-y-2">
-                          <div>
-                            <p className="font-medium text-gray-700">강점:</p>
-                            <p className="text-gray-600">{feedback.strengths.join(', ')}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-700">개선점:</p>
-                            <p className="text-gray-600">{feedback.areasForImprovement.join(', ')}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-700">제안:</p>
-                            <p className="text-gray-600">{feedback.suggestions.join(', ')}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-700">점수:</p>
-                            <p className="text-gray-600">{feedback.score}/100</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 추가 질문 */}
-                {showFollowUpQuestions[q._id] && followUpQuestions && followUpQuestions.length > 0 && (
-                  <div className="flex justify-start">
-                    <div className="relative max-w-[80%] bg-[#DEFFCF]/40 rounded-2xl">
-                      <div className="p-4">
-                        <p className="font-medium mb-2">추가 질문:</p>
-                        {followUpQuestions.map((followUp, i) => (
-                          <p key={i} className="whitespace-pre-wrap mb-2">
-                            • {followUp}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="relative max-w-[80%] bg-[#DEFFCF] rounded-2xl">
-                  <div className="p-4">
-                    <p>답변을 생성하는 중...</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Input Area */}
-        <div className="p-6 bg-white">
-          <div className="max-w-3xl mx-auto">
-            {interview.currentQuestionIndex < interview.questions.length && (
-              <form onSubmit={handleSubmit} className="flex gap-3">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="답변을 입력하세요"
-                  className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
-                  disabled={isLoading || isListening}
-                />
-                <div className="flex flex-col gap-3">
-                  <Button 
-                    type="submit" 
-                    className="bg-lime-500 hover:bg-lime-600 rounded-full px-6"
-                    disabled={isLoading || isListening} >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                  <Link href={`/chat/${interview_id}`}>
-                    <Button 
-                      className="bg-lime-500 hover:bg-lime-600 rounded-full px-6"
-                    >
-                      <File className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      </div>
-      <audio ref={audioRef} className="hidden" />
     </div>
   )
 }
