@@ -5,7 +5,7 @@ import type * as React from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Plus, BookOpen, MessageSquare } from "lucide-react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
 import { UserControllerService } from "@/api-client"
 import type { ResumeHistory, InterviewHistory } from "./nav-main"
@@ -52,9 +52,8 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, use
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state, setOpen, toggleSidebar } = useSidebar()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const isCollapsed = state === "collapsed"
-
   const [resumeHistory, setResumeHistory] = useState<ResumeHistory[]>([])
   const [interviewHistory, setInterviewHistory] = useState<InterviewHistory[]>([])
 
@@ -89,9 +88,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const data = {
     user: {
-      name: session?.user?.name || "Guest",
-      email: session?.user?.email || "guest@example.com",
-      avatar: session?.user?.image || "/avatars/default.jpg",
+      id: user?.username || "Guest",
+      email: user?.email || "guest@example.com",
     },
     navMain: [
       {
@@ -145,7 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={data.navMain} onItemClick={expandSidebar} />
       </SidebarContent>
-      
+
       <SidebarFooter>
         <NavUser user={data.user} />
       </SidebarFooter>
