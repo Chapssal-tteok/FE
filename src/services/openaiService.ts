@@ -1,4 +1,5 @@
-import OpenAI from 'openai'
+// src/services/openaiService.ts
+/* import OpenAI from 'openai'
 
 interface Message {
   role: 'system' | 'user' | 'assistant';
@@ -11,9 +12,6 @@ interface InterviewFeedback {
   suggestions: string[]
   score: number
 }
-
-// 개발 환경 감지
-// const isDevelopment = process.env.NODE_ENV === 'development'
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -155,4 +153,4 @@ export const getChatResponse = async (
     console.error('Error getting chat response:', error);
     return null;
   }
-};
+}; */
