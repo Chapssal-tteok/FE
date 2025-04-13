@@ -22,7 +22,7 @@ interface Message {
 }
 
 export default function Chat() {
-  const { id: resume_id } = useParams()
+  const { id: resumeId } = useParams();
   const { isLoggedIn } = useAuth()
   const router = useRouter()
   const [message, setMessage] = useState("")
@@ -50,7 +50,7 @@ export default function Chat() {
         setIsLoading(true)
 
         // 자기소개서 데이터 가져오기
-        const resumeResponse = await ResumeControllerService.getResume(Number(resume_id))
+        const resumeResponse = await ResumeControllerService.getResume(Number(resumeId))
         if (!resumeResponse.result) {
           throw new Error("자기소개서 정보를 불러올 수 없습니다.")
         }
@@ -82,7 +82,7 @@ export default function Chat() {
     }
 
     fetchInitialMessages()
-  }, [resume_id])
+  }, [resumeId])
 
   const handleSendMessage = async () => {
     if(!message.trim()) return
@@ -212,10 +212,10 @@ export default function Chat() {
                     >
                       <Send className="w-4 h-4" />
                     </Button>
-                    <Link href={`/interview/${resume_id}`}>
+                    <Link href={`/interview/${resumeId}`}>
                       <Button className="bg-lime-500 hover:bg-lime-600 rounded-full px-6">
-                        <Video className="w-4 h-4" />
-                      </Button>
+                      <Video className="w-4 h-4" />
+                    </Button>          
                     </Link>
                   </div>
                 </div>
