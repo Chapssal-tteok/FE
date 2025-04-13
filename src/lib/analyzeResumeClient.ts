@@ -1,7 +1,7 @@
 // utils/analyzeResumeClient.ts
 export async function analyzeResume(resume: string, company: string, position: string): Promise<string[]> {
   try {
-    const response = await fetch('http://172.24.112.1:3000/api/analyzeResume', {
+    const response = await fetch('http://192.168.45.39:3000/api/analyzeResume', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
