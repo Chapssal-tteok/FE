@@ -1,7 +1,7 @@
 // signup/page.tsx
 "use client" 
 
-import { UserAuthControllerService, RegisterResponseDTO } from "@/api-client"
+import { UserControllerService, UserAuthControllerService, RegisterResponseDTO } from "@/api-client"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -12,12 +12,35 @@ import Image from "next/image"
 
 export default function SignUp() {
   const [username, setUserName] = useState("")
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null)
+  const [checkingUsername, setCheckingUsername] = useState(false)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
   const router = useRouter()
+
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username) {
+      setIsUsernameAvailable(null)
+      return
+    }
+  
+    setCheckingUsername(true)
+    try {
+      const response = await UserControllerService.checkUserExistence(username)
+      const exists = response.result?.exists;
+  
+      setIsUsernameAvailable(!exists) // 존재하면 사용 불가, 존재하지 않으면 사용 가능
+    } catch (error) {
+      console.error("ID 중복 확인 실패:", error)
+      setIsUsernameAvailable(null)
+    } finally {
+      setCheckingUsername(false)
+    }
+  }
+  
 
   const validatePassword = (password: string) => {
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[a-zA-Z\d]{8,}$/
@@ -68,6 +91,7 @@ export default function SignUp() {
   const isFormValid = () => {
     return (
       username.length > 0 &&
+      isUsernameAvailable === true &&
       name.length > 0 &&
       email.length > 0 &&
       password.length > 0 &&
@@ -115,11 +139,21 @@ export default function SignUp() {
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUserName(e.target.value)}
+                onChange={(e) => {setUserName(e.target.value); setIsUsernameAvailable(null);}}
+                onBlur={() => checkUsernameAvailability(username)}
                 required
                 className="rounded-lg border-gray-300 bg-white"
                 placeholder="Id"
               />
+              {checkingUsername && (
+                <p className="text-gray-500 text-xs">ID 확인 중...</p>
+              )}
+              {isUsernameAvailable === false && (
+                <p className="text-red-500 text-xs">이미 사용 중인 ID입니다.</p>
+              )}
+              {isUsernameAvailable === true && (
+                <p className="text-green-500 text-xs">사용 가능한 ID입니다.</p>
+              )}
             </div>
 
             <div className="space-y-1">

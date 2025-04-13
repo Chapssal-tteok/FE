@@ -1,8 +1,8 @@
 // writeResume/page.tsx
 "use client"
 
-import { ResumeControllerService, ResumeQaControllerService } from "@/api-client"
-import type { CreateResumeDTO, CreateResumeQaDTO } from "@/api-client"
+import { ResumeControllerService, ResumeQaControllerService, InterviewControllerService, InterviewQaControllerService } from "@/api-client"
+import type { CreateResumeDTO, CreateResumeQaDTO, CreateInterviewDTO, CreateInterviewQaDTO } from "@/api-client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -44,7 +44,7 @@ export default function NewResume() {
   const [position, setPosition] = useState("")
   const [questions, setQuestions] = useState<Question[]>([{ id: 1, question: "", answer: "" }])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
      // 입력 필드 검증
@@ -105,6 +105,49 @@ export default function NewResume() {
     }
   }
 
+  const handleInterviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    // 입력 필드 검증
+    if (!company.trim() || !position.trim()) {
+      alert("회사명과 지원 직무를 입력해주세요.")
+      return
+    }
+    for (const q of questions) {
+      if (!q.question.trim() || !q.answer.trim()) {
+        alert("모든 문항과 답변을 작성해주세요.")
+        return
+      }
+    }
+    try {
+      const createInterviewRequest: CreateInterviewDTO = {
+        title,
+        company,
+        position,
+      }
+      
+      const interviewResponse = await InterviewControllerService.createInterview(createInterviewRequest);
+      const interviewId = interviewResponse.result?.interviewId;
+      if (!interviewId) {
+        throw new Error("면접 생성 실패");
+      }
+
+      // 문항 및 답변 생성
+      for (const [index, q] of questions.entries()) {
+        const createInterviewQaRequest: CreateInterviewQaDTO = {
+          number: index + 1,
+          question: q.question,
+        };
+  
+        await InterviewQaControllerService.createInterviewQa(interviewId, createInterviewQaRequest);
+      }
+
+      router.push(`/interview/${interviewId}`)
+    } catch (error) {
+      console.error("Interview 제출 실패:", error)
+      alert("제출 중 오류가 발생했습니다.")
+    }
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden p-4">
       <div className="absolute inset-0 bg-[url(/Gradients.svg)] bg-center bg-cover opacity-30 z-0"></div>
@@ -133,7 +176,7 @@ export default function NewResume() {
       <div className="container max-w-4xl mx-auto mt-15">
         <Card className="bg-[#DEFFCF]/50 backdrop-blur-xs rounded-3xl">
           <CardContent className="p-6 ">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form className="space-y-6">
               <div>
                 <Label htmlFor="title">제목</Label>
                 <Input id="title"
@@ -206,12 +249,24 @@ export default function NewResume() {
                   </Button>
                 </div>
                 ))}
-
               </div>
+                <div className="flex flex-col md:flex-row gap-4">
+                <Button 
+                  type="submit" 
+                  className="flex-1 text-black bg-lime-400 hover:bg-lime-500" 
+                  onClick={handleChatSubmit}
+                >
+                  자기소개서 피드백
+                </Button>
 
-              <Button type="submit" className="w-full text-black bg-lime-400 hover:bg-lime-500">
-                제출
-              </Button>
+                <Button 
+                  type="submit" 
+                  className="flex-1 text-black bg-green-500 hover:bg-green-600"
+                  onClick={handleInterviewSubmit}
+                >
+                  면접 연습
+                </Button>
+                </div>
             </form>
           </CardContent>
         </Card>

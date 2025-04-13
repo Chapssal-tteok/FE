@@ -20,7 +20,7 @@ interface Question {
   _id: string
   question: string
   answer?: string
-  feedback?: InterviewFeedback
+  feedback?: string
   followUpQuestions?: string[]
 }
 
@@ -33,16 +33,16 @@ interface Interview {
   title: string
 }
 
-interface InterviewFeedback {
-  strengths: string[]
-  areasForImprovement: string[]
-  suggestions: string[]
-  score: number
-}
+// interface InterviewFeedback {
+//   strengths: string
+//   areasForImprovement: string
+//   suggestions: string
+//   score: number
+// }
 
 export default function InterviewPage() {
-  const resume_id = useParams().resume_id as string
-  const interview_id = useParams().id as string
+  const resumeId = useParams().resume_id as string
+  const interviewId = useParams().id as string
   const { isLoggedIn } = useAuth()
   const router = useRouter()
   const [interview, setInterview] = useState<Interview | null>(null)
@@ -54,18 +54,18 @@ export default function InterviewPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [feedback, setFeedback] = useState<InterviewFeedback | null>(null)
+  const [feedback, setFeedback] = useState<string>("")
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([])
   const [showFollowUpQuestions, setShowFollowUpQuestions] = useState<Record<string, boolean>>({})
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
-
+  
   const loadInterview = useCallback(async () => {
     setIsLoading(true)
-    try {
-      const response = await InterviewControllerService.getInterview(Number(interview_id))
+    try {  
+      const response = await InterviewControllerService.getInterview(Number(interviewId))
       const data = response.result
 
       if(!data) {
@@ -113,7 +113,7 @@ export default function InterviewPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [interview_id, isVoiceMode, /*speakText*/])
+  }, [interviewId, isVoiceMode, /*speakText*/])
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -121,7 +121,7 @@ export default function InterviewPage() {
     } else {
       loadInterview()
     }
-  }, [isLoggedIn, router, interview_id, loadInterview])
+  }, [isLoggedIn, router, interviewId, loadInterview])
 
   useEffect(() => {
     scrollToBottom()
@@ -157,54 +157,49 @@ export default function InterviewPage() {
 
     try {
       // 자기소개서 데이터 가져오기
-      const resumeResponse = await ResumeControllerService.getResume(Number(resume_id))
-      if (!resumeResponse.result) {
-        throw new Error("자기소개서 정보를 불러올 수 없습니다.")
-      }
-      const resumeQas = resumeResponse.result.resumeQas || []
+      // const resumeResponse = await ResumeControllerService.getResume(Number(resumeId))
+      // if (!resumeResponse.result) {
+      //   throw new Error("자기소개서 정보를 불러올 수 없습니다.")
+      // }
+      // const resumeQas = resumeResponse.result.resumeQas || []
 
-      // 문항과 답변 조합
-      const combinedContent = resumeQas
-        ? resumeQas.map((qa, index) => `문항 ${index + 1}: ${qa.question}\n답변: ${qa.answer}`).join('\n\n')
-        : "자기소개서 문항이 없습니다.";
+      // // 문항과 답변 조합
+      // const combinedContent = resumeQas
+      //   ? resumeQas.map((qa, index) => `문항 ${index + 1}: ${qa.question}\n답변: ${qa.answer}`).join('\n\n')
+      //   : "자기소개서 문항이 없습니다.";
 
-      // 답변 분석 및 피드백 생성
       const feedbackResponse = await analyzeAnswer(
         currentQuestion.question,
         input,
-        combinedContent
-      )
-      const feedback: InterviewFeedback = typeof feedbackResponse === "string"
-        ? JSON.parse(feedbackResponse)
-        : feedbackResponse
-      setFeedback({
-        strengths: feedback.strengths || [],
-        areasForImprovement: feedback.areasForImprovement || [],
-        suggestions: feedback.suggestions || [],
-        score: feedback.score || 0,
-      })
+        //combinedContent
+      );
+
+      setFeedback(feedbackResponse);
 
       // 추가 질문 생성
       const followUps = await generateFollowUpQuestions(
         currentQuestion.question,
         input
-      )
-      setFollowUpQuestions(followUps)
+      );
+      setFollowUpQuestions(followUps);
 
       // 현재는 로컬 상태만 업데이트 (API 호출 없음)
       setInterview((prev) => {
-        if (!prev) return prev
-        const updated = [...prev.questions]
+        if (!prev) return prev;
+        const updated = [...prev.questions];
         updated[prev.currentQuestionIndex] = {
           ...updated[prev.currentQuestionIndex],
           answer: input,
-          feedback,
+          feedback: feedbackResponse,
           followUpQuestions: followUps,
-        }
+        };
         return {
           ...prev,
           questions: updated,
-          currentQuestionIndex: prev.currentQuestionIndex + 1,
+          currentQuestionIndex: 
+            prev.currentQuestionIndex + 1 < prev.questions.length
+            ? prev.currentQuestionIndex + 1
+            : prev.currentQuestionIndex,
         }
       })
 
@@ -231,9 +226,9 @@ export default function InterviewPage() {
       //   await speakText(nextQuestion.question)
       // }
     } catch (error) {
-      console.error('Failed to submit answer:', error)
+      console.error('Failed to submit answer:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -284,12 +279,12 @@ export default function InterviewPage() {
   // }
 
   // 음성 입력 중지
-  const stopListening = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop()
-      setIsListening(false)
-    }
-  }
+  // const stopListening = () => {
+  //   if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+  //     mediaRecorderRef.current.stop()
+  //     setIsListening(false)
+  //   }
+  // }
 
   // 추가 질문 생성
   const toggleFollowUpQuestions = (questionId: string) => {
@@ -299,7 +294,8 @@ export default function InterviewPage() {
     }));
   };
 
-  if (!isLoggedIn || !interview) return null
+  if (!isLoggedIn) return null
+  if (!interview) return <div className="p-4">면접 정보를 불러오지 못했습니다.</div>;
 
   return (
     <div className="min-h-screen bg-white">
@@ -318,7 +314,7 @@ export default function InterviewPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/writeResume">Chat</BreadcrumbLink>
+                    <BreadcrumbLink href={`/chat/${resumeId}`}>Chat</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
@@ -379,7 +375,7 @@ export default function InterviewPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setFeedback(null)} // 질문 재생성 코드-> 맞는지 확인하기
+                            onClick={() => setFeedback} // 질문 재생성 코드-> 맞는지 확인하기
                             disabled={isLoading}
                             className="h-6 w-6 hover:bg-[#DEFFCF]"
                           >
@@ -401,7 +397,7 @@ export default function InterviewPage() {
                     )}
 
                     {/* 피드백 */}
-                    {feedback && (
+                    {q.feedback && (
                       <div className="flex justify-center">
                         <div className="w-[90%] bg-white border-2 border-[#DEFFCF] rounded-xl shadow-sm">
                           <div className="p-4">
@@ -424,22 +420,9 @@ export default function InterviewPage() {
 
                             {/* 피드백 텍스트 */}
                             <div className="space-y-2">
-                              <div>
-                                <p className="font-medium text-gray-700">강점:</p>
-                                <p className="text-gray-600">{feedback.strengths.join(', ')}</p>
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-700">개선점:</p>
-                                <p className="text-gray-600">{feedback.areasForImprovement.join(', ')}</p>
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-700">제안:</p>
-                                <p className="text-gray-600">{feedback.suggestions.join(', ')}</p>
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-700">점수:</p>
-                                <p className="text-gray-600">{feedback.score}/100</p>
-                              </div>
+                            {typeof q.feedback === "string" && (
+                              <p className="text-sm text-gray-600 whitespace-pre-line">{q.feedback}</p>
+                            )}
                             </div>
                           </div>
                         </div>
@@ -497,7 +480,7 @@ export default function InterviewPage() {
                       >
                         <Send className="w-4 h-4" />
                       </Button>
-                      <Link href={`/chat/${interview_id}`}>
+                      <Link href={`/chat/${resumeId}`}>
                         <Button className="bg-lime-500 hover:bg-lime-600 rounded-full px-6">
                           <File className="w-4 h-4" />
                         </Button>

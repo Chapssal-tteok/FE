@@ -1,9 +1,14 @@
+// contexts/AuthContext.tsx
 "use client"
 
 import React, { createContext, useState, useContext, useEffect, type ReactNode } from "react"
+import { UserAuthControllerService } from '@/api-client/services/UserAuthControllerService';
+import type { LoginRequestDTO } from '@/api-client/models/LoginRequestDTO';
+import type { ApiResponseJwtResponse } from '@/api-client/models/ApiResponseJwtResponse';
+import { set } from "date-fns";
 
 interface User{
-  username: string
+  username: string  //id
   email: string
   name: string
 }
@@ -13,6 +18,7 @@ interface AuthContextType {
   isLoggedIn: boolean
   login: (token: string, user: User) => void
   logout: () => void
+  token: string | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -20,15 +26,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
 
   useEffect(() => {
     try {
-      const token = localStorage.getItem("token")
-      const storedUser = localStorage.getItem("user")
+      const savedToken = localStorage.getItem("token")
+      const savedUser = localStorage.getItem("user")
 
-      if (token && storedUser) {
+      if (savedToken && savedUser) {
+        setToken(savedToken)
         setIsLoggedIn(true)
-        setUser(JSON.parse(storedUser))
+        setUser(JSON.parse(savedUser))
       }
     } catch (error) {
       console.error("Error accessing localStorage:", error)
@@ -39,6 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem("token", token)
       localStorage.setItem("user", JSON.stringify(user))
+
+      setToken(token)
       setUser(user)
       setIsLoggedIn(true)
     } catch (error) {
@@ -50,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.removeItem("token")
       localStorage.removeItem("user")
+
+      setToken(null)
       setUser(null)
       setIsLoggedIn(false)
     } catch (error) {
@@ -57,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ isLoggedIn, user, login, logout, token }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

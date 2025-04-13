@@ -1,7 +1,7 @@
 // lib/interviewClient.ts
 
 export async function generateInterviewQuestions(company: string, position: string, resumeContent: string): Promise<string[]> {
-  const response = await fetch('http://172.24.112.1:3000/api/interviewQuestions', {
+  const response = await fetch('http://192.168.45.39:3000/api/interviewQuestions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ company, position, resumeContent })
@@ -15,11 +15,11 @@ export async function generateInterviewQuestions(company: string, position: stri
   return data.questions;
 }
 
-export async function analyzeAnswer(question: string, answer: string, resume: string): Promise<string> {
-  const response = await fetch('http://172.24.112.1:3000/api/interview/analyzeAnswer', {
+export async function analyzeAnswer(question: string, answer: string, /* resume: string */): Promise<string> {
+  const response = await fetch('http://192.168.45.39:3000/api/interview/analyzeAnswer', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, answer, resume }),
+    body: JSON.stringify({ question, answer/*, resume */ }),
   });
 
   if (!response.ok) {
@@ -31,7 +31,7 @@ export async function analyzeAnswer(question: string, answer: string, resume: st
 }
 
 export async function generateFollowUpQuestions(question: string, answer: string): Promise<string[]> {
-  const response = await fetch('http://172.24.112.1:3000/api/interview/followUp', {
+  const response = await fetch('http://192.168.45.39:3000/api/interview/followUp', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question, answer }),

@@ -9,6 +9,7 @@
     "lint": "next lint",
     "update_api": "openapi-typescript-codegen --input http://54.180.2.79:8080/v3/api-docs --output ./src/api-client --client axios"
   },
+  "proxy": "http://54.180.2.79:8080",
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-avatar": "^1.1.4",
