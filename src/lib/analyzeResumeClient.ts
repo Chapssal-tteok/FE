@@ -1,7 +1,9 @@
-// utils/analyzeResumeClient.ts
+// lib/analyzeResumeClient.ts
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export async function analyzeResume(resume: string, company: string, position: string): Promise<string[]> {
   try {
-    const response = await fetch('http://192.168.45.39:3000/api/analyzeResume', {
+    const response = await fetch(`${API_URL}/api/analyzeResume`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
