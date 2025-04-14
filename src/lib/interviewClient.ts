@@ -1,7 +1,8 @@
 // lib/interviewClient.ts
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function generateInterviewQuestions(company: string, position: string, resumeContent: string): Promise<string[]> {
-  const response = await fetch('http://192.168.45.39:3000/api/interviewQuestions', {
+  const response = await fetch(`${API_URL}/api/interviewQuestions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ company, position, resumeContent })
@@ -16,7 +17,7 @@ export async function generateInterviewQuestions(company: string, position: stri
 }
 
 export async function analyzeAnswer(question: string, answer: string, /* resume: string */): Promise<string> {
-  const response = await fetch('http://192.168.45.39:3000/api/interview/analyzeAnswer', {
+  const response = await fetch(`${API_URL}/interview/analyzeAnswer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question, answer/*, resume */ }),
@@ -31,7 +32,7 @@ export async function analyzeAnswer(question: string, answer: string, /* resume:
 }
 
 export async function generateFollowUpQuestions(question: string, answer: string): Promise<string[]> {
-  const response = await fetch('http://192.168.45.39:3000/api/interview/followUp', {
+  const response = await fetch(`${API_URL}/api/interview/followUp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question, answer }),
