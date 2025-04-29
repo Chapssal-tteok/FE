@@ -8,7 +8,7 @@ import { format } from "date-fns"
 import { ko } from "date-fns/locale"
 
 interface Interview {
-  interview_id: string
+  interviewId: string
   company: string
   position: string
   createdAt: string
@@ -31,21 +31,22 @@ const InterviewItem = memo(function InterviewItem({
       role="listitem"
     >
       <Checkbox
-        id={`interview-${interview.interview_id}`}
+        id={`interview-${interview.interviewId}`}
         checked={isSelected}
-        onCheckedChange={() => onToggle(interview.interview_id)}
-        aria-label={`${interview.company} 면접 선택`}
+        onCheckedChange={() => onToggle(interview.interviewId)}
+        aria-label={`${interview.title} 면접 선택`}
       />
       <Link 
-        href={`/interview/${interview.interview_id}`} 
+        href={`/interview/${interview.interviewId}`} 
         className="flex-1 ml-4 hover:text-lime-600 transition-colors"
-        aria-label={`${interview.company} ${interview.position} 면접 상세 보기`}
+        aria-label={`${interview.title} 면접 상세 보기`}
       >
         <div>
           <h3 className="font-semibold">{interview.company}</h3>
           <p className="text-sm text-gray-600">{interview.position}</p>
           <p className="text-xs text-gray-500">
             {format(new Date(interview.createdAt), "PPP", { locale: ko })}
+            {format(new Date(interview.updatedAt), "PPP", { locale: ko })}
           </p>
         </div>
       </Link>
@@ -95,9 +96,9 @@ export function InterviewList({ interviews, onDelete }: InterviewListProps) {
         <ul className="space-y-2" role="list">
           {interviews.map((interview) => (
             <InterviewItem
-              key={interview.interview_id}
+              key={interview.interviewId}
               interview={interview}
-              isSelected={selectedInterviews.includes(interview.interview_id)}
+              isSelected={selectedInterviews.includes(interview.interviewId)}
               onToggle={toggleSelection}
             />
           ))}

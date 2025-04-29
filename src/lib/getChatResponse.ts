@@ -5,18 +5,11 @@ interface Message {
   content: string;
 }
 
-interface InterviewFeedback {
-  strengths: string[];
-  areasForImprovement: string[];
-  suggestions: string[];
-  score: number;
-}
-
 export const getChatResponse = async (
   prompt: string,
   model: string = 'sonar',
   responseType: 'text' | 'json' = 'text'
-): Promise<string | InterviewFeedback | string[] | null> => {
+): Promise<string | null> => {
   try {
     const messages: Message[] = [
       {
