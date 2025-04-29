@@ -16,22 +16,22 @@ import Link from "next/link"
 import Image from "next/image"
 
 interface Resume {
-  resume_id: string
+  resumeId: string
   company: string
   position: string
   createdAt: string
 }
 
 interface Interview {
-  interview_id: string
+  interviewId: string
   company: string
   position: string
   createdAt: string
 }
 
 export default function MyPage() {
-  const { resume_id } = useParams()
-  const { interview_id } = useParams()
+  const { resumeId } = useParams()
+  const { interviewId } = useParams()
   const { isLoggedIn, logout, user } = useAuth()
   const router = useRouter()
   const [resumes, setResumes] = useState<Resume[]>([])
@@ -42,14 +42,16 @@ export default function MyPage() {
 
   const fetchResumes = useCallback(async () => {
     try {
-      const response = await ResumeControllerService.getResume(Number(resume_id))
+      const response = await UserControllerService.getMyResumes(Number(resumeId))
       if (response.result) {
         if (Array.isArray(response.result)) {
           setResumes(response.result.map((resume: any) => ({
-            resume_id: resume.resumeId,
+            resumeId: resume.resumeId,
+            title: resume.title,
             company: resume.company,
             position: resume.position,
             createdAt: resume.createdAt,
+            updatedAt: resume.updatedAt,
           })))
         } else {
           console.error("Unexpected response format:", response.result)
@@ -62,14 +64,16 @@ export default function MyPage() {
 
   const fetchInterviews = useCallback(async () => {
     try {
-      const response = await InterviewControllerService.getInterview(Number(interview_id))
+      const response = await UserControllerService.getMyInterviews(Number(interviewId))
       if (response.result) {
         if (Array.isArray(response.result)) {
           setInterviews(response.result.map((interview: any) => ({
-            interview_id: interview.inrerviewId,
+            interviewId: interview.inrerviewId,
+            title: interview.title,
             company: interview.company,
             position: interview.position,
             createdAt: interview.createdAt,
+            updatedAt: interview.updatedAt,
           })))
         } else {
           console.error("Unexpected response format:", response.result)
@@ -91,8 +95,8 @@ export default function MyPage() {
 
   const handleDeleteResumes = async (selectedIds: string[]) => {
     try {
-      await Promise.all(selectedIds.map(() => ResumeControllerService.deleteResume(Number(resume_id))))
-      setResumes(prev => prev.filter(item => !selectedIds.includes(item.resume_id)))
+      await Promise.all(selectedIds.map(() => ResumeControllerService.deleteResume(Number(resumeId))))
+      setResumes(prev => prev.filter(item => !selectedIds.includes(item.resumeId)))
     } catch (error) {
       console.error("Failed to delete resumes:", error)
     }
@@ -100,8 +104,8 @@ export default function MyPage() {
 
   const handleDeleteInterviews = async (selectedIds: string[]) => {
     try {
-      await Promise.all(selectedIds.map(() => InterviewControllerService.deleteInterview(Number(interview_id))))
-      setInterviews(prev => prev.filter(item => !selectedIds.includes(item.interview_id)))
+      await Promise.all(selectedIds.map(() => InterviewControllerService.deleteInterview(Number(interviewId))))
+      setInterviews(prev => prev.filter(item => !selectedIds.includes(item.interviewId)))
     } catch (error) {
       console.error("Failed to delete interviews:", error)
     }
@@ -125,21 +129,23 @@ export default function MyPage() {
   }
 
   // 회원 탈퇴 처리 -> 회원 탈퇴 API 추가 후 사용
-  // const handleAccountDelete = async (password: string) => {
-  //   try {
-  //     if (!user) throw new Error("User not found")
-  //     const response = await UserControllerService.deleteUserInfo()
+  const handleAccountDelete = async (password: string) => {
+    try {
+      if (!user) throw new Error("User not found")
+      
+      const response = await UserControllerService.deleteUserInfo()
 
-  //     if (!response.isSuccess) {
-  //       throw new Error(response.message || "회원 탈퇴에 실패하였습니다.")
-  //     }
-  //     logout()
-  //     router.push("/")
-  //   } catch (error) {
-  //     console.error("회원 탈퇴 실패:", error)
-  //     alert(error instanceof Error ? error.message : "오류가 발생했습니다.")
-  //   }
-  // }
+      if (!response.isSuccess) {
+        throw new Error(response.message || "회원 탈퇴에 실패하였습니다.")
+      }
+      
+      logout()
+      router.push("/")
+    } catch (error) {
+      console.error("회원 탈퇴 실패:", error)
+      alert(error instanceof Error ? error.message : "오류가 발생했습니다.")
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -233,18 +239,18 @@ export default function MyPage() {
         onSubmit={handlePasswordChange}
       />
 
-      {/* <AccountDeleteDialog
+       <AccountDeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleAccountDelete}
-      /> */}
+      />
 
       <DeleteAllRecordsDialog
         isOpen={isDeleteAllRecordsDialogOpen}
         onOpenChange={setIsDeleteAllRecordsDialogOpen}
         onConfirm={async () => {
-          await handleDeleteResumes(resumes.map(r => r.resume_id))
-          await handleDeleteInterviews(interviews.map(i => i.interview_id))
+          await handleDeleteResumes(resumes.map(r => r.resumeId))
+          await handleDeleteInterviews(interviews.map(i => i.interviewId))
         }}
       />
     </div>
