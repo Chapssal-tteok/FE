@@ -16,11 +16,11 @@ export async function generateInterviewQuestions(company: string, position: stri
   return data.questions;
 }
 
-export async function analyzeAnswer(question: string, answer: string, /* resume: string */): Promise<string> {
+export async function analyzeAnswer(question: string, answer: string, resumeContent: string): Promise<string> {
   const response = await fetch(`${API_URL}/interview/analyzeAnswer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, answer/*, resume */ }),
+    body: JSON.stringify({ question, answer, resumeContent}),
   });
 
   if (!response.ok) {
