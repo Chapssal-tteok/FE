@@ -13,45 +13,8 @@ import { NavMain } from "./nav-main"
 import { NavUser } from "./nav-user"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from "@/components/ui/sidebar"
 
-// 샘플 데이터
-// const resumeHistory = [
-//   {
-//     id: "1",
-//     title: "Software Engineer Resume",
-//     date: "2023-04-15",
-//   },
-//   {
-//     id: "2",
-//     title: "Product Manager Resume with Very Long Title That Should Truncate",
-//     date: "2023-04-10",
-//   },
-//   {
-//     id: "3",
-//     title: "Data Scientist Resume",
-//     date: "2023-04-05",
-//   },
-// ]
-
-// const interviewHistory = [
-//   {
-//     id: "4",
-//     title: "Frontend Developer Interview",
-//     date: "2023-04-12",
-//   },
-//   {
-//     id: "5",
-//     title: "Backend Developer Interview with Extra Long Title for Testing Truncation",
-//     date: "2023-04-08",
-//   },
-//   {
-//     id: "6",
-//     title: "System Design Interview",
-//     date: "2023-04-03",
-//   },
-// ]
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { state, setOpen, toggleSidebar } = useSidebar()
+  const { state, setOpen } = useSidebar()
   const { user } = useAuth()
   const isCollapsed = state === "collapsed"
   const [resumeHistory, setResumeHistory] = useState<ResumeHistory[]>([])
