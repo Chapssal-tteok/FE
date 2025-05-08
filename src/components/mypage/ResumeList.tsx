@@ -8,10 +8,12 @@ import { format } from "date-fns"
 import { ko } from "date-fns/locale"
 
 interface Resume {
-  resume_id: string
+  resumeId: string
+  title: string
   company: string
   position: string
   createdAt: string
+  updatedAt: string
 }
 
 interface ResumeItemProps {
@@ -31,28 +33,31 @@ const ResumeItem = memo(function ResumeItem({
       role="listitem"
     >
       <Checkbox
-        id={`resume-${resume.resume_id}`}
+        id={`resume-${resume.resumeId}`}
         checked={isSelected}
-        onCheckedChange={() => onToggle(resume.resume_id)}
-        aria-label={`${resume.company} 자기소개서 선택`}
+        onCheckedChange={() => onToggle(resume.resumeId)}
+        aria-label={`${resume.title} 자기소개서 선택`}
       />
       <div className="flex-1 ml-4">
         <Link 
-          href={`/resume/${resume.resume_id}`}
+          href={`/resume/${resume.resumeId}`}
           className="block hover:text-lime-600 transition-colors"
-          aria-label={`${resume.company} ${resume.position} 자기소개서 상세 보기`}
+          aria-label={`${resume.title} 자기소개서 상세 보기`}
         >
-          <h3 className="font-semibold">{resume.company}</h3>
-          <p className="text-sm text-gray-600">{resume.position}</p>
+          <h3 className="font-semibold">{resume.title}</h3>
+          <p className="font-sm">{resume.company} {resume.position}</p>
           <p className="text-xs text-gray-500">
-            {format(new Date(resume.createdAt), "PPP", { locale: ko })}
+            생성일: {format(new Date(resume.createdAt), "PPP", { locale: ko })}
+          </p>
+          <p className="text-xs text-gray-500">
+            최근 수정일: {format(new Date(resume.updatedAt), "PPP", { locale: ko })}
           </p>
         </Link>
       </div>
       <Link 
-        href={`/chat/${resume.resume_id}`}
+        href={`/chat/${resume.resumeId}`}
         className="ml-4"
-        aria-label={`${resume.company} 자기소개서 피드백 받기`}
+        aria-label={`${resume.title} 자기소개서 피드백 받기`}
       >
         <Button variant="outline" className="text-lime-500 hover:text-lime-600">
           피드백 받기
@@ -119,9 +124,9 @@ export function ResumeList({ resumes, onDelete }: ResumeListProps) {
         <ul className="space-y-2" role="list">
           {resumes.map((resume) => (
             <ResumeItem
-              key={resume.resume_id}
+              key={resume.resumeId}
               resume={resume}
-              isSelected={selectedResumes.includes(resume.resume_id)}
+              isSelected={selectedResumes.includes(resume.resumeId)}
               onToggle={toggleSelection}
             />
           ))}

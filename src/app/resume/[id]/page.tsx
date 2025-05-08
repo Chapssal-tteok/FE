@@ -22,14 +22,14 @@ interface Resume {
 
 export default function ResumePage() {
   const { isLoggedIn, logout } = useAuth()
-  const resume_id = useParams().id
+  const resumeId = useParams().id
   const router = useRouter()
   const [ resume, setResume ] = useState<Resume | null>(null)
   const [ loading, setLoading ] = useState(true)
 
-  const fetchResume = useCallback(async (resume_id: string) => {
+  const fetchResume = useCallback(async (id: string) => {
     try {
-      const response = await ResumeControllerService.getResume(Number(resume_id))
+      const response = await ResumeControllerService.getResume(Number(id))
 
       if(!response || !response.result) {
         throw new Error("Failed to fetch resume data")
@@ -57,13 +57,13 @@ export default function ResumePage() {
       router.push("/login")
       return
     }
-    if (!resume_id) {
+    if (!resumeId) {
       return
     }
-    if (typeof resume_id === 'string') {
-      fetchResume(resume_id)
+    if (typeof resumeId === 'string') {
+      fetchResume(resumeId)
     }
-  }, [isLoggedIn, resume_id, router, fetchResume])
+  }, [isLoggedIn, resumeId, router, fetchResume])
 
   const handleLogout = () => {
     console.log("Logging out...")
@@ -121,7 +121,7 @@ export default function ResumePage() {
         </Card>
 
         <div className="flex justify-end mt-5">
-          <Link href={`/chat/${resume_id}`}>
+          <Link href={`/chat/${resumeId}`}>
             <Button 
               className="bg-lime-400 hover:bg-lime-500 text-white px-6 py-2 rounded-lg shadow-md transition-colors" >
               AI 피드백 받기
