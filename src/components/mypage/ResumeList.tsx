@@ -9,9 +9,11 @@ import { ko } from "date-fns/locale"
 
 interface Resume {
   resumeId: string
+  title: string
   company: string
   position: string
   createdAt: string
+  updatedAt: string
 }
 
 interface ResumeItemProps {
@@ -42,11 +44,13 @@ const ResumeItem = memo(function ResumeItem({
           className="block hover:text-lime-600 transition-colors"
           aria-label={`${resume.title} 자기소개서 상세 보기`}
         >
-          <h3 className="font-semibold">{resume.company}</h3>
-          <p className="text-sm text-gray-600">{resume.position}</p>
+          <h3 className="font-semibold">{resume.title}</h3>
+          <p className="font-sm">{resume.company} {resume.position}</p>
           <p className="text-xs text-gray-500">
-            {format(new Date(resume.createdAt), "PPP", { locale: ko })}
-            {format(new Date(resume.updatedAt), "PPP", { locale: ko })}
+            생성일: {format(new Date(resume.createdAt), "PPP", { locale: ko })}
+          </p>
+          <p className="text-xs text-gray-500">
+            최근 수정일: {format(new Date(resume.updatedAt), "PPP", { locale: ko })}
           </p>
         </Link>
       </div>

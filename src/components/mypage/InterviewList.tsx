@@ -9,9 +9,11 @@ import { ko } from "date-fns/locale"
 
 interface Interview {
   interviewId: string
+  title: string
   company: string
   position: string
   createdAt: string
+  updatedAt: string
 }
 
 interface InterviewItemProps {
@@ -42,11 +44,13 @@ const InterviewItem = memo(function InterviewItem({
         aria-label={`${interview.title} 면접 상세 보기`}
       >
         <div>
-          <h3 className="font-semibold">{interview.company}</h3>
-          <p className="text-sm text-gray-600">{interview.position}</p>
+          <h3 className="font-semibold">{interview.title}</h3>
+          <p className="text-sm text-gray-600">{interview.company} {interview.position}</p>
           <p className="text-xs text-gray-500">
-            {format(new Date(interview.createdAt), "PPP", { locale: ko })}
-            {format(new Date(interview.updatedAt), "PPP", { locale: ko })}
+            생성일: {format(new Date(interview.createdAt), "PPP", { locale: ko })}
+          </p>
+          <p className="text-xs text-gray-500">
+            최근 수정일: {format(new Date(interview.updatedAt), "PPP", { locale: ko })}
           </p>
         </div>
       </Link>
