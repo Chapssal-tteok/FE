@@ -2,10 +2,6 @@
 "use client"
 
 import React, { createContext, useState, useContext, useEffect, type ReactNode } from "react"
-import { UserAuthControllerService } from '@/api-client/services/UserAuthControllerService';
-import type { LoginRequestDTO } from '@/api-client/models/LoginRequestDTO';
-import type { ApiResponseJwtResponse } from '@/api-client/models/ApiResponseJwtResponse';
-import { set } from "date-fns";
 
 interface User{
   username: string  //id
