@@ -33,13 +33,6 @@ interface Interview {
   title: string
 }
 
-// interface InterviewFeedback {
-//   strengths: string
-//   areasForImprovement: string
-//   suggestions: string
-//   score: number
-// }
-
 export default function InterviewPage() {
   const resumeId = useParams().resume_id as string
   const interviewId = useParams().id as string
@@ -62,6 +55,31 @@ export default function InterviewPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
   
+  const speakText = useCallback(async (text: string) => {
+    try {
+      const response = await fetch("https://texttospeech.googleapis.com/v1/text:synthesize?key=AIzaSyDgNMxaVdEveIF-quLvELfaw6RMd3_OCMo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (response.ok) {
+        const audioBlob = await response.blob()
+        const audioUrl = URL.createObjectURL(audioBlob)
+        if (audioRef.current) {
+          audioRef.current.src = audioUrl
+          await audioRef.current.play()
+        }
+      } else {
+        throw new Error("Failed to synthesize speech")
+      }
+    } catch (error) {
+      console.error("Error in text-to-speech:", error)
+    }
+  }, [])
+
   const loadInterview = useCallback(async () => {
     setIsLoading(true)
     try {  
@@ -101,19 +119,19 @@ export default function InterviewPage() {
         currentQuestionIndex: 0,
       })
 
-      // 음성 모드일 경우 첫 질문 읽기
-      // if (isVoiceMode && data?.interviewQas?.[0]) {
-      //   if (data.interviewQas[0].question) {
-      //     await speakText(data.interviewQas[0].question)
-      //   }
-      // }
+      //음성 모드일 경우 첫 질문 읽기
+      if (isVoiceMode && data?.interviewQas?.[0]) {
+        if (data.interviewQas[0].question) {
+          await speakText(data.interviewQas[0].question)
+        }
+      }
 
     } catch (error) {
       console.error("Failed to load interview:", error)
     } finally {
       setIsLoading(false)
     }
-  }, [interviewId, isVoiceMode, /*speakText*/])
+  }, [interviewId, isVoiceMode, speakText])
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -127,26 +145,6 @@ export default function InterviewPage() {
     scrollToBottom()
   }, [interview])
 
-  // Google TTS API 호출
-  // const speakText = useCallback(async (text: string) => {
-  //   try {
-  //     const response = await 
-
-  //     if (response.ok) {
-  //       const audioBlob = await response.blob()
-  //       const audioUrl = URL.createObjectURL(audioBlob)
-  //       if (audioRef.current) {
-  //         audioRef.current.src = audioUrl
-  //         await audioRef.current.play()
-  //       }
-  //     } else {
-  //       throw new Error("Failed to synthesize speech")
-  //     }
-  //   } catch (error) {
-  //     console.error("Error in text-to-speech:", error)
-  //   }
-  // }, [interview_id])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !interview) return
@@ -157,21 +155,21 @@ export default function InterviewPage() {
 
     try {
       // 자기소개서 데이터 가져오기
-      // const resumeResponse = await ResumeControllerService.getResume(Number(resumeId))
-      // if (!resumeResponse.result) {
-      //   throw new Error("자기소개서 정보를 불러올 수 없습니다.")
-      // }
-      // const resumeQas = resumeResponse.result.resumeQas || []
+      const resumeResponse = await ResumeControllerService.getResume(Number(resumeId))
+      if (!resumeResponse.result) {
+        throw new Error("자기소개서 정보를 불러올 수 없습니다.")
+      }
+      const resumeQas = resumeResponse.result.resumeQas || []
 
-      // // 문항과 답변 조합
-      // const combinedContent = resumeQas
-      //   ? resumeQas.map((qa, index) => `문항 ${index + 1}: ${qa.question}\n답변: ${qa.answer}`).join('\n\n')
-      //   : "자기소개서 문항이 없습니다.";
+      // 문항과 답변 조합
+      const combinedContent = resumeQas
+        ? resumeQas.map((qa, index) => `문항 ${index + 1}: ${qa.question}\n답변: ${qa.answer}`).join('\n\n')
+        : "자기소개서 문항이 없습니다.";
 
       const feedbackResponse = await analyzeAnswer(
         currentQuestion.question,
         input,
-        //combinedContent
+        combinedContent
       );
 
       setFeedback(feedbackResponse);
@@ -203,28 +201,28 @@ export default function InterviewPage() {
         }
       })
 
-      // 답변 저장 
-      // const response = await InterviewControllerService.submitAnswer(
-      //   Number(interview_id),
-      //   currentQuestion._id,
-      //   input,
-      //   feedback,
-      //   followUps
-      // )
+      // 답변 저장
+      const response = await InterviewControllerService.submitAnswer(
+        Number(interviewId),
+        currentQuestion._id,
+        input,
+        feedback,
+        followUps
+      )
 
-      // const updatedInterview = response.result
-      // setInterview(updatedInterview)
+      const updatedInterview = response.result
+      setInterview(updatedInterview)
       setInput('')
 
       // 다음 질문이 있으면 음성으로 읽기
-      // if (
-      //   isVoiceMode &&
-      //   updatedInterview.currentQuestionIndex < updatedInterview.questions.length - 1
-      // ) {
-      //   const nextQuestion =
-      //     updatedInterview.questions[updatedInterview.currentQuestionIndex + 1]
-      //   await speakText(nextQuestion.question)
-      // }
+      if (
+        isVoiceMode &&
+        updatedInterview.currentQuestionIndex < updatedInterview.questions.length - 1
+      ) {
+        const nextQuestion =
+          updatedInterview.questions[updatedInterview.currentQuestionIndex + 1]
+        await speakText(nextQuestion.question)
+      }
     } catch (error) {
       console.error('Failed to submit answer:', error);
     } finally {
@@ -233,58 +231,66 @@ export default function InterviewPage() {
   }
 
   // 음성 모드 전환
-  // const toggleVoiceMode = () => {
-  //   setIsVoiceMode(!isVoiceMode)
-  //   if (!isVoiceMode && interview?.questions[interview.currentQuestionIndex]) {
-  //     speakText(interview.questions[interview.currentQuestionIndex].question)
-  //   }
-  // }
+  const toggleVoiceMode = () => {
+    setIsVoiceMode(!isVoiceMode)
+    if (!isVoiceMode && interview?.questions[interview.currentQuestionIndex]) {
+      speakText(interview.questions[interview.currentQuestionIndex].question)
+    }
+  }
 
   // STT 음성 모드: 사용자가 답변한 음성을 텍스트로 변환
-  // const startListening = async () => {
-  //   setIsListening(true)
-  //   try {
-  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  //     const mediaRecorder = new MediaRecorder(stream)
-  //     mediaRecorderRef.current = mediaRecorder
-  //     audioChunksRef.current = []
+  const startListening = async () => {
+    setIsListening(true)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
 
-  //     mediaRecorder.addEventListener("dataavailable", (event) => {
-  //       audioChunksRef.current.push(event.data)
-  //     })
+      mediaRecorder.addEventListener("dataavailable", (event) => {
+        audioChunksRef.current.push(event.data)
+      })
 
-  //     mediaRecorder.addEventListener("stop", async () => {
-  //       const audioBlob = new Blob(audioChunksRef.current)
-  //       const response = await 
+      mediaRecorder.addEventListener("stop", async () => {
+        const audioBlob = new Blob(audioChunksRef.current)
 
-  //       if (response.ok) {
-  //         const { transcription } = await response.json()
-  //         setInput(transcription)
-  //       } else {
-  //         throw new Error("Failed to recognize speech")
-  //       }
+        // API 생성 후 사용
+        const response = await fetch("https://speech.googleapis.com/v1/speech:recognize?key=AIzaSyDgNMxaVdEveIF-quLvELfaw6RMd3_OCMo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ audio: audioBlob }),
+        });
 
-  //       setIsListening(false)
-  //       stream.getTracks().forEach((track) => track.stop())
-  //     })
+        if (response.ok) {
+          const { transcription } = await response.json()
+          setInput(transcription)
+        } else {
+          throw new Error("Failed to recognize speech")
+        }
 
-  //     mediaRecorder.start()
-  //     setTimeout(() => {
-  //       mediaRecorder.stop()
-  //     }, 10000)
-  //   } catch (error) {
-  //     console.error("Error in speech recognition:", error)
-  //     setIsListening(false)
-  //   }
-  // }
+        setIsListening(false)
+        stream.getTracks().forEach((track) => track.stop())
+      })
+
+      mediaRecorder.start()
+      setTimeout(() => {
+        mediaRecorder.stop()
+      }, 10000)
+    } catch (error) {
+      console.error("Error in speech recognition:", error)
+      setIsListening(false)
+    }
+  }
 
   // 음성 입력 중지
-  // const stopListening = () => {
-  //   if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-  //     mediaRecorderRef.current.stop()
-  //     setIsListening(false)
-  //   }
-  // }
+  const stopListening = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop()
+      setIsListening(false)
+    }
+  }
 
   // 추가 질문 생성
   const toggleFollowUpQuestions = (questionId: string) => {
@@ -327,7 +333,7 @@ export default function InterviewPage() {
             <div className="flex gap-2">
               <Button
                 type="button"
-                // onClick={toggleVoiceMode}
+                onClick={toggleVoiceMode}
                 variant="outline"
                 className="rounded-full px-3 py-1.5 flex items-center gap-1 text-xs hover:bg-[#DEFFCF]/40"
               >
@@ -346,7 +352,7 @@ export default function InterviewPage() {
               {isVoiceMode && (
                 <Button
                   type="button"
-                  // onClick={isListening ? stopListening : startListening}
+                  onClick={isListening ? stopListening : startListening}
                   disabled={isLoading}
                   variant={isListening ? "default" : "outline"}
                   className="rounded-full px-3 py-1.5 flex items-center gap-1 text-xs hover:bg-[#DEFFCF]/40"
@@ -375,7 +381,24 @@ export default function InterviewPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setFeedback} // 질문 재생성 코드-> 맞는지 확인하기
+                            onClick={async () => {
+                              if (!interview) return;
+                              const newQuestions = await generateInterviewQuestions(
+                                interview.company,
+                                interview.position,
+                                interview.title
+                              );
+                              setInterview(prev => ({
+                                ...prev!,
+                                questions: newQuestions.map((question, index) => ({
+                                  _id: String(index + 1),
+                                  question,
+                                  answer: "",
+                                  feedback: undefined,
+                                  followUpQuestions: [],
+                              }))
+                              }));
+                            }}
                             disabled={isLoading}
                             className="h-6 w-6 hover:bg-[#DEFFCF]"
                           >
