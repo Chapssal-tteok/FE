@@ -57,7 +57,7 @@ export default function InterviewPage() {
   
   const speakText = useCallback(async (text: string) => {
     try {
-      const response = await fetch("https://texttospeech.googleapis.com/v1/text:synthesize?key=AIzaSyDgNMxaVdEveIF-quLvELfaw6RMd3_OCMo", {
+      const response = await fetch(`${URL}/api/tts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -73,10 +73,10 @@ export default function InterviewPage() {
           await audioRef.current.play()
         }
       } else {
-        throw new Error("Failed to synthesize speech")
+        throw new Error("음성 합성에 실패했습니다")
       }
     } catch (error) {
-      console.error("Error in text-to-speech:", error)
+      console.error("TTS 오류:", error)
     }
   }, [])
 
@@ -254,8 +254,7 @@ export default function InterviewPage() {
       mediaRecorder.addEventListener("stop", async () => {
         const audioBlob = new Blob(audioChunksRef.current)
 
-        // API 생성 후 사용
-        const response = await fetch("https://speech.googleapis.com/v1/speech:recognize?key=AIzaSyDgNMxaVdEveIF-quLvELfaw6RMd3_OCMo", {
+        const response = await fetch(`${URL}/api/stt`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
