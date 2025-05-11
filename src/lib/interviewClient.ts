@@ -17,7 +17,7 @@ export async function generateInterviewQuestions(company: string, position: stri
 }
 
 export async function analyzeAnswer(question: string, answer: string, resumeContent: string): Promise<string> {
-  const response = await fetch(`${API_URL}/interview/analyzeAnswer`, {
+  const response = await fetch(`${API_URL}/api/interview/analyzeAnswer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question, answer, resumeContent}),

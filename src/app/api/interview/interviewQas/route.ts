@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: '필수 입력 누락' }, { status: 400 });
   }
 
-  const prompt = generateInterviewQasPrompt(company, position, resumeContent);
+  const pplxContent = `${company} - ${position}`;
+  const prompt = generateInterviewQasPrompt(pplxContent, resumeContent);
   const result = await getChatResponse(prompt, 'sonar', 'text');
 
   if (!result || typeof result !== 'string') {

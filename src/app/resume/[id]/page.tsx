@@ -18,6 +18,7 @@ interface Resume {
   position: string
   content: string
   createdAt: string
+  updatedAt: string
 }
 
 export default function ResumePage() {
@@ -35,15 +36,16 @@ export default function ResumePage() {
         throw new Error("Failed to fetch resume data")
       }
 
-      const { resumeId, title, createdAt } = response.result
+      const { resumeId, title, company, position, content, createdAt, updatedAt } = response.result
       
       setResume({
         id: resumeId?.toString() ?? "",
         title: title ?? "제목 없음",
-        company: "",
-        position: "",
-        content: "",
-        createdAt: createdAt ?? ""
+        company: company ?? "",
+        position: position ?? "",
+        content: content ?? "",
+        createdAt: createdAt ?? "",
+        updatedAt: updatedAt ?? ""
       })
     } catch (error) {
       console.error(error)

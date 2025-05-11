@@ -17,16 +17,20 @@ import Image from "next/image"
 
 interface Resume {
   resumeId: string
+  title: string
   company: string
   position: string
   createdAt: string
+  updatedAt: string
 }
 
 interface Interview {
   interviewId: string
+  title: string
   company: string
   position: string
   createdAt: string
+  updatedAt: string
 }
 
 export default function MyPage() {
@@ -36,13 +40,14 @@ export default function MyPage() {
   const router = useRouter()
   const [resumes, setResumes] = useState<Resume[]>([])
   const [interviews, setInterviews] = useState<Interview[]>([])
+  const [userInfo, setUserInfo] = useState<any>(null)
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleteAllRecordsDialogOpen, setIsDeleteAllRecordsDialogOpen] = useState(false)
 
   const fetchResumes = useCallback(async () => {
     try {
-      const response = await UserControllerService.getMyResumes(Number(resumeId))
+      const response = await UserControllerService.getMyResumes()
       if (response.result) {
         if (Array.isArray(response.result)) {
           setResumes(response.result.map((resume: any) => ({
@@ -64,11 +69,11 @@ export default function MyPage() {
 
   const fetchInterviews = useCallback(async () => {
     try {
-      const response = await UserControllerService.getMyInterviews(Number(interviewId))
+      const response = await UserControllerService.getMyInterviews()
       if (response.result) {
         if (Array.isArray(response.result)) {
           setInterviews(response.result.map((interview: any) => ({
-            interviewId: interview.inrerviewId,
+            interviewId: interview.interviewId,
             title: interview.title,
             company: interview.company,
             position: interview.position,
@@ -84,14 +89,26 @@ export default function MyPage() {
     }
   }, [])
 
+  const fetchUserInfo = useCallback(async () => {
+    try {
+      const response = await UserControllerService.getUserInfo()
+      if (response.result) {
+        setUserInfo(response.result)
+      }
+    } catch (error) {
+      console.error("Failed to fetch user info:", error)
+    }
+  }, [])
+
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/login")
     } else {
       fetchResumes()
       fetchInterviews()
+      fetchUserInfo()
     }
-  }, [isLoggedIn, fetchResumes, fetchInterviews, router])
+  }, [isLoggedIn, fetchResumes, fetchInterviews, fetchUserInfo, router])
 
   const handleDeleteResumes = async (selectedIds: string[]) => {
     try {
@@ -104,10 +121,23 @@ export default function MyPage() {
 
   const handleDeleteInterviews = async (selectedIds: string[]) => {
     try {
-      await Promise.all(selectedIds.map(() => InterviewControllerService.deleteInterview(Number(interviewId))))
+      await Promise.all(selectedIds.map(id => InterviewControllerService.deleteInterview(Number(id))))
       setInterviews(prev => prev.filter(item => !selectedIds.includes(item.interviewId)))
     } catch (error) {
       console.error("Failed to delete interviews:", error)
+    }
+  }
+
+  const handleDeleteAllRecords = async () => {
+    try {
+      await Promise.all([
+        ...resumes.map(resume => ResumeControllerService.deleteResume(Number(resume.resumeId))),
+        ...interviews.map(interview => InterviewControllerService.deleteInterview(Number(interview.interviewId)))
+      ])
+      setResumes([])
+      setInterviews([])
+    } catch (error) {
+      console.error("Failed to delete all records:", error)
     }
   }
 
@@ -133,11 +163,11 @@ export default function MyPage() {
     try {
       if (!user) throw new Error("User not found")
       
-      const response = await UserControllerService.deleteUserInfo()
+      //const response = await UserControllerService.deleteUserInfo()
 
-      if (!response.isSuccess) {
-        throw new Error(response.message || "회원 탈퇴에 실패하였습니다.")
-      }
+      // if (!response.isSuccess) {
+      //   throw new Error(response.message || "회원 탈퇴에 실패하였습니다.")
+      // }
       
       logout()
       router.push("/")
@@ -184,17 +214,17 @@ export default function MyPage() {
 
             <div className="flex items-center justify-between border-b pb-4">
               <span className="font-medium">이름</span>
-              <span className="text-gray-600">{user?.name || "Unknown User"}</span>
+              <span className="text-gray-600">{userInfo?.name || "Unknown User"}</span>
             </div>
 
             <div className="flex items-center justify-between border-b pb-4">
               <span className="font-medium">이메일</span>
-              <span className="text-gray-600">{user?.email || "Unknown User"}</span>
+              <span className="text-gray-600">{userInfo?.email || "Unknown User"}</span>
             </div>
 
             <div className="flex items-center justify-between border-b pb-4">
               <span className="font-medium">아이디</span>
-              <span className="text-gray-600">{user?.username || "Unknown User"}</span>
+              <span className="text-gray-600">{userInfo?.username || "Unknown User"}</span>
             </div>
             
             <div className="flex items-center justify-between border-b pb-4">
@@ -239,7 +269,7 @@ export default function MyPage() {
         onSubmit={handlePasswordChange}
       />
 
-       <AccountDeleteDialog
+      <AccountDeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleAccountDelete}
@@ -248,10 +278,7 @@ export default function MyPage() {
       <DeleteAllRecordsDialog
         isOpen={isDeleteAllRecordsDialogOpen}
         onOpenChange={setIsDeleteAllRecordsDialogOpen}
-        onConfirm={async () => {
-          await handleDeleteResumes(resumes.map(r => r.resumeId))
-          await handleDeleteInterviews(interviews.map(i => i.interviewId))
-        }}
+        onConfirm={handleDeleteAllRecords}
       />
     </div>
   )
