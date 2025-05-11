@@ -2,7 +2,7 @@
 "use client"
 
 import { ResumeControllerService, InterviewControllerService, UserControllerService } from "@/api-client"
-import { UpdateUserDTO } from "@/api-client/models/UpdateUserDTO"
+import { UpdateUserDTO, SimpleResumeDTO, SimpleInterviewDTO, UserInfoDTO } from "@/api-client"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { ResumeList } from "@/components/mypage/ResumeList"
 import { InterviewList } from "@/components/mypage/InterviewList"
 import { PasswordChangeDialog } from "@/components/mypage/PasswordChangeDialog"
-import { AccountDeleteDialog } from "@/components/mypage/AccountDeleteDialog"
+//import { AccountDeleteDialog } from "@/components/mypage/AccountDeleteDialog"
 import { DeleteAllRecordsDialog } from "@/components/mypage/DeleteAllRecordsDialog"
 import Link from "next/link"
 import Image from "next/image"
@@ -35,14 +35,13 @@ interface Interview {
 
 export default function MyPage() {
   const { resumeId } = useParams()
-  const { interviewId } = useParams()
-  const { isLoggedIn, logout, user } = useAuth()
+  const { isLoggedIn, logout } = useAuth()
   const router = useRouter()
   const [resumes, setResumes] = useState<Resume[]>([])
   const [interviews, setInterviews] = useState<Interview[]>([])
-  const [userInfo, setUserInfo] = useState<any>(null)
+  const [userInfo, setUserInfo] = useState<UserInfoDTO | null>(null)
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  //const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleteAllRecordsDialogOpen, setIsDeleteAllRecordsDialogOpen] = useState(false)
 
   const fetchResumes = useCallback(async () => {
@@ -50,13 +49,13 @@ export default function MyPage() {
       const response = await UserControllerService.getMyResumes()
       if (response.result) {
         if (Array.isArray(response.result)) {
-          setResumes(response.result.map((resume: any) => ({
-            resumeId: resume.resumeId,
-            title: resume.title,
-            company: resume.company,
-            position: resume.position,
-            createdAt: resume.createdAt,
-            updatedAt: resume.updatedAt,
+          setResumes(response.result.map((resume: SimpleResumeDTO) => ({
+            resumeId: String(resume.resumeId),
+            title: resume.title || "",
+            company: resume.company || "",
+            position: resume.position || "",
+            createdAt: resume.createdAt || "",
+            updatedAt: resume.updatedAt || "",
           })))
         } else {
           console.error("Unexpected response format:", response.result)
@@ -72,13 +71,13 @@ export default function MyPage() {
       const response = await UserControllerService.getMyInterviews()
       if (response.result) {
         if (Array.isArray(response.result)) {
-          setInterviews(response.result.map((interview: any) => ({
-            interviewId: interview.interviewId,
-            title: interview.title,
-            company: interview.company,
-            position: interview.position,
-            createdAt: interview.createdAt,
-            updatedAt: interview.updatedAt,
+          setInterviews(response.result.map((interview: SimpleInterviewDTO) => ({
+            interviewId: String(interview.interviewId),
+            title: interview.title || "",
+            company: interview.company || "",
+            position: interview.position || "",
+            createdAt: interview.createdAt || "",
+            updatedAt: interview.updatedAt || "",
           })))
         } else {
           console.error("Unexpected response format:", response.result)
@@ -159,23 +158,23 @@ export default function MyPage() {
   }
 
   // 회원 탈퇴 처리 -> 회원 탈퇴 API 추가 후 사용
-  const handleAccountDelete = async (password: string) => {
-    try {
-      if (!user) throw new Error("User not found")
+  // const handleAccountDelete = async (password: string) => {
+  //   try {
+  //     if (!user) throw new Error("User not found")
       
-      //const response = await UserControllerService.deleteUserInfo()
+  //     const response = await UserControllerService.deleteUserInfo()
 
-      // if (!response.isSuccess) {
-      //   throw new Error(response.message || "회원 탈퇴에 실패하였습니다.")
-      // }
+  //     if (!response.isSuccess) {
+  //       throw new Error(response.message || "회원 탈퇴에 실패하였습니다.")
+  //     }
       
-      logout()
-      router.push("/")
-    } catch (error) {
-      console.error("회원 탈퇴 실패:", error)
-      alert(error instanceof Error ? error.message : "오류가 발생했습니다.")
-    }
-  }
+  //     logout()
+  //     router.push("/")
+  //   } catch (error) {
+  //     console.error("회원 탈퇴 실패:", error)
+  //     alert(error instanceof Error ? error.message : "오류가 발생했습니다.")
+  //   }
+  // }
 
   const handleLogout = () => {
     logout()
@@ -253,7 +252,7 @@ export default function MyPage() {
               <span className="font-medium">계정 삭제</span>
               <Button 
                 variant="outline" 
-                onClick={() => setIsDeleteDialogOpen(true)}
+                //onClick={() => setIsDeleteDialogOpen(true)}
                 className="text-red-600 hover:bg-red-50"
               >
                 계정 삭제
@@ -269,11 +268,11 @@ export default function MyPage() {
         onSubmit={handlePasswordChange}
       />
 
-      <AccountDeleteDialog
+      {/* <AccountDeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleAccountDelete}
-      />
+      /> */}
 
       <DeleteAllRecordsDialog
         isOpen={isDeleteAllRecordsDialogOpen}

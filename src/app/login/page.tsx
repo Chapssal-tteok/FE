@@ -43,14 +43,17 @@ export default function LogIn() {
   
       alert("로그인에 성공했습니다.")
       router.push("/")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("로그인 오류:", error)
   
       const message =
-        error?.body?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        "로그인에 실패했습니다. 다시 시도해주세요."
+        error && typeof error === 'object' && 'body' in error && error.body && typeof error.body === 'object' && 'message' in error.body
+          ? error.body.message
+          : error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data
+          ? error.response.data.message
+          : error instanceof Error
+          ? error.message
+          : "로그인에 실패했습니다. 다시 시도해주세요."
   
       alert(message)
     }

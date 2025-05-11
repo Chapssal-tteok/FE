@@ -77,12 +77,14 @@ export default function SignUp() {
 
       alert("회원가입에 성공했습니다. 로그인 해주세요.");
       router.push("/login");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log("회원가입 실패:", error);
-      const message =
-        error?.body?.message ||
-        error?.response?.data?.message ||
-        "회원가입에 실패했습니다. 다시 시도해주세요.";
+      const message: string =
+        error && typeof error === 'object' && 'body' in error && error.body && typeof error.body === 'object' && 'message' in error.body
+          ? String(error.body.message)
+          : error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data
+          ? String(error.response.data.message)
+          : "회원가입에 실패했습니다. 다시 시도해주세요.";
       setErrorMessage(message);
       console.error("회원가입 실패:", message);
     }
