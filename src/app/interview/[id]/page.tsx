@@ -1,7 +1,7 @@
 // Interview/[id]/page.tsx
 "use client"
 
-import { InterviewControllerService, ResumeControllerService } from "@/api-client"
+import { InterviewControllerService, ResumeControllerService, InterviewQaControllerService, ResumeQaControllerService, VoiceControllerService } from "@/api-client"
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
@@ -14,7 +14,6 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { Send, Mic, MicOff, Volume2, File, RefreshCw } from "lucide-react"
-import { generateInterviewQuestions, analyzeAnswer, generateFollowUpQuestions } from "@/lib/interviewClient"
 
 interface Question {
   _id: string
@@ -51,34 +50,64 @@ export default function InterviewPage() {
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([])
   const [showFollowUpQuestions, setShowFollowUpQuestions] = useState<Record<string, boolean>>({})
 
+  const fetchAndUpdateQuestions = async (company: string, position: string, resumeContent: string) => {
+    // 면접 질문 생성
+    await InterviewQaControllerService.generateInterviewQuestion(
+      Number(interviewId),
+      {
+        company,
+        position,
+        resumeContent
+      }
+    )
+    // 질문 목록 다시 가져오기
+    const updatedQasResponse = await InterviewQaControllerService.getInterviewQasByInterviewId(Number(interviewId))
+    const updatedQas = updatedQasResponse.result || []
+    
+    setInterview(prev => ({
+      ...prev!,
+      questions: updatedQas.map((qa) => ({
+        _id: String(qa.interviewQaId),
+        question: qa.question || "",
+        answer: qa.answer || "",
+        feedback: qa.analysis || undefined,
+        followUpQuestions: [],
+      }))
+    }));
+
+    //음성 모드일 경우 첫 질문 읽기
+    if (isVoiceMode && updatedQas.length > 0) {
+      if (updatedQas[0].question) {
+        await speakText(updatedQas[0].question)
+      }
+    }
+    return updatedQas;
+  }
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
   
   const speakText = useCallback(async (text: string) => {
     try {
-      const response = await fetch(`${URL}/api/tts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text }),
+      const response = await VoiceControllerService.textToSpeech({
+        text
       });
 
-      if (response.ok) {
-        const audioBlob = await response.blob()
-        const audioUrl = URL.createObjectURL(audioBlob)
+      if (response.result) {
+        const audioBlob = new Blob([response.result], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
         if (audioRef.current) {
-          audioRef.current.src = audioUrl
-          await audioRef.current.play()
+          audioRef.current.src = audioUrl;
+          await audioRef.current.play();
         }
       } else {
-        throw new Error("음성 합성에 실패했습니다")
+        throw new Error("음성 합성에 실패했습니다");
       }
     } catch (error) {
-      console.error("TTS 오류:", error)
+      console.error("TTS 오류:", error);
     }
-  }, [])
+  }, []);
 
   const loadInterview = useCallback(async () => {
     setIsLoading(true)
@@ -90,39 +119,40 @@ export default function InterviewPage() {
         console.error("No interview data found")
       }
       
-      // 면접 질문이 없으면 생성
-      if (data && (!data.interviewQas || data.interviewQas.length === 0)) {
-        const generatedQuestions = await generateInterviewQuestions(
-          data.company || "",
-          data.position || "",
-          data.title || ""
-        )
-        data.interviewQas = generatedQuestions.map((question, index) => ({
-          interviewQaId: index + 1, // Assign a numeric ID (e.g., index + 1)
-          question,
-          answer: "",
-        }))
-      }
+      // 면접 질문 목록 가져오기
+      const qasResponse = await InterviewQaControllerService.getInterviewQasByInterviewId(Number(interviewId))
+      const qas = qasResponse.result || []
       
-      setInterview({
-        _id: String(data?.interviewId || ""),
-        company: data?.company || "",
-        position: data?.position || "",
-        title: data?.title || "",
-        questions: data?.interviewQas?.map((qa) => ({
-          _id: String(qa.interviewQaId),
-          question: qa.question || "",
-          answer: qa.answer || "",
-          feedback: undefined,
-          followUpQuestions: [],
-        })) || [],
-        currentQuestionIndex: 0,
-      })
+      // 면접 질문이 없으면 생성
+      if (data && qas.length === 0) {
+        // 자기소개서 내용 가져오기
+        const resumeResponse = await ResumeQaControllerService.getResumeQasByResumeId(Number(resumeId))
+        const resumeContent = resumeResponse.result
+          ? resumeResponse.result.map(qa => `Q: ${qa.question}\nA: ${qa.answer || ''}`).join('\n\n')
+          : ""
 
-      //음성 모드일 경우 첫 질문 읽기
-      if (isVoiceMode && data?.interviewQas?.[0]) {
-        if (data.interviewQas[0].question) {
-          await speakText(data.interviewQas[0].question)
+        await fetchAndUpdateQuestions(data.company || "", data.position || "", resumeContent)
+      } else {
+        setInterview({
+          _id: String(data?.interviewId || ""),
+          company: data?.company || "",
+          position: data?.position || "",
+          title: data?.title || "",
+          questions: qas.map((qa) => ({
+            _id: String(qa.interviewQaId),
+            question: qa.question || "",
+            answer: qa.answer || "",
+            feedback: qa.analysis || undefined,
+            followUpQuestions: [],
+          })),
+          currentQuestionIndex: 0,
+        })
+        
+        //음성 모드일 경우 첫 질문 읽기
+        if (isVoiceMode && qas.length > 0) {
+          if (qas[0].question) {
+            await speakText(qas[0].question)
+          }
         }
       }
 
@@ -159,27 +189,41 @@ export default function InterviewPage() {
       if (!resumeResponse.result) {
         throw new Error("자기소개서 정보를 불러올 수 없습니다.")
       }
-      const resumeQas = resumeResponse.result.resumeQas || []
-
-      // 문항과 답변 조합
-      const combinedContent = resumeQas
-        ? resumeQas.map((qa, index) => `문항 ${index + 1}: ${qa.question}\n답변: ${qa.answer}`).join('\n\n')
-        : "자기소개서 문항이 없습니다.";
-
-      const feedbackResponse = await analyzeAnswer(
-        currentQuestion.question,
-        input,
-        combinedContent
-      );
-
-      setFeedback(feedbackResponse);
+      
+      // 답변 저장
+      await InterviewQaControllerService.updateAnswer(
+        Number(interviewId),
+        Number(currentQuestion._id),
+        {
+          answer: input
+        }
+      )
+      
+      // 답변 분석
+      const analysisResponse = await InterviewQaControllerService.analyzeAnswer(
+        Number(interviewId),
+        Number(currentQuestion._id),
+        {
+          question: currentQuestion.question,
+          answer: input,
+          resume: JSON.stringify(resumeResponse.result)
+        }
+      )
+      
+      const feedbackResponse = analysisResponse.result?.analysis || ""
+      setFeedback(feedbackResponse)
 
       // 추가 질문 생성
-      const followUps = await generateFollowUpQuestions(
-        currentQuestion.question,
-        input
-      );
-      setFollowUpQuestions(followUps);
+      const followUpResponse = await InterviewQaControllerService.generateFollowUp(
+        Number(interviewId),
+        {
+          question: currentQuestion.question,
+          answer: input
+        }
+      )
+      
+      const followUps = followUpResponse.result?.question ? [followUpResponse.result.question] : []
+      setFollowUpQuestions(followUps)
 
       // 현재는 로컬 상태만 업데이트 (API 호출 없음)
       setInterview((prev) => {
@@ -201,26 +245,14 @@ export default function InterviewPage() {
         }
       })
 
-      // 답변 저장
-      const response = await InterviewControllerService.submitAnswer(
-        Number(interviewId),
-        currentQuestion._id,
-        input,
-        feedback,
-        followUps
-      )
-
-      const updatedInterview = response.result
-      setInterview(updatedInterview)
       setInput('')
 
       // 다음 질문이 있으면 음성으로 읽기
       if (
         isVoiceMode &&
-        updatedInterview.currentQuestionIndex < updatedInterview.questions.length - 1
+        interview.currentQuestionIndex + 1 < interview.questions.length
       ) {
-        const nextQuestion =
-          updatedInterview.questions[updatedInterview.currentQuestionIndex + 1]
+        const nextQuestion = interview.questions[interview.currentQuestionIndex + 1]
         await speakText(nextQuestion.question)
       }
     } catch (error) {
@@ -240,48 +272,47 @@ export default function InterviewPage() {
 
   // STT 음성 모드: 사용자가 답변한 음성을 텍스트로 변환
   const startListening = async () => {
-    setIsListening(true)
+    setIsListening(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = mediaRecorder
-      audioChunksRef.current = []
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
       mediaRecorder.addEventListener("dataavailable", (event) => {
-        audioChunksRef.current.push(event.data)
-      })
+        audioChunksRef.current.push(event.data);
+      });
 
       mediaRecorder.addEventListener("stop", async () => {
-        const audioBlob = new Blob(audioChunksRef.current)
+        const audioBlob = new Blob(audioChunksRef.current);
 
-        const response = await fetch(`${URL}/api/stt`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ audio: audioBlob }),
-        });
+        try {
+          const response = await VoiceControllerService.speechToText({
+            file: audioBlob
+          });
 
-        if (response.ok) {
-          const { transcription } = await response.json()
-          setInput(transcription)
-        } else {
-          throw new Error("Failed to recognize speech")
+          if (response.result?.transcription) {
+            setInput(response.result.transcription);
+          } else {
+            throw new Error("음성 인식에 실패했습니다");
+          }
+        } catch (error) {
+          console.error("STT 오류:", error);
         }
 
-        setIsListening(false)
-        stream.getTracks().forEach((track) => track.stop())
-      })
+        setIsListening(false);
+        stream.getTracks().forEach((track) => track.stop());
+      });
 
-      mediaRecorder.start()
+      mediaRecorder.start();
       setTimeout(() => {
-        mediaRecorder.stop()
-      }, 10000)
+        mediaRecorder.stop();
+      }, 10000);
     } catch (error) {
-      console.error("Error in speech recognition:", error)
-      setIsListening(false)
+      console.error("Error in speech recognition:", error);
+      setIsListening(false);
     }
-  }
+  };
 
   // 음성 입력 중지
   const stopListening = () => {
@@ -382,21 +413,12 @@ export default function InterviewPage() {
                             size="icon"
                             onClick={async () => {
                               if (!interview) return;
-                              const newQuestions = await generateInterviewQuestions(
-                                interview.company,
-                                interview.position,
-                                interview.title
-                              );
-                              setInterview(prev => ({
-                                ...prev!,
-                                questions: newQuestions.map((question, index) => ({
-                                  _id: String(index + 1),
-                                  question,
-                                  answer: "",
-                                  feedback: undefined,
-                                  followUpQuestions: [],
-                              }))
-                              }));
+                              // 자기소개서 내용 가져오기
+                              const resumeResponse = await ResumeQaControllerService.getResumeQasByResumeId(Number(resumeId))
+                              const resumeContent = resumeResponse.result
+                                ? resumeResponse.result.map(qa => `Q: ${qa.question}\nA: ${qa.answer || ''}`).join('\n\n')
+                                : ""
+                              await fetchAndUpdateQuestions(interview.company, interview.position, resumeContent)
                             }}
                             disabled={isLoading}
                             className="h-6 w-6 hover:bg-[#DEFFCF]"
