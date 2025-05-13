@@ -46,7 +46,6 @@ export default function InterviewPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [feedback, setFeedback] = useState<string>("")
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([])
   const [showFollowUpQuestions, setShowFollowUpQuestions] = useState<Record<string, boolean>>({})
 
@@ -161,7 +160,7 @@ export default function InterviewPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [interviewId, isVoiceMode, speakText])
+  }, [interviewId, isVoiceMode, speakText, fetchAndUpdateQuestions, resumeId])
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -211,7 +210,6 @@ export default function InterviewPage() {
       )
       
       const feedbackResponse = analysisResponse.result?.analysis || ""
-      setFeedback(feedbackResponse)
 
       // 추가 질문 생성
       const followUpResponse = await InterviewQaControllerService.generateFollowUp(
