@@ -87,12 +87,12 @@ export default function ResumePage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden p-4">
-      <div className="absolute inset-0 bg-[url(/Gradients.svg)] bg-center bg-cover opacity-30 z-0"></div>
+      <div className="absolute inset-0 bg-[url(/svg/Gradients.svg)] bg-center bg-cover opacity-30 z-0"></div>
       <header className="absolute top-0 w-full p-4 z-10">
         <div className="flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold">
             <div className="flex items-center">
-              <Image src="/logo.svg" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1 mt-[-2px]" />
+              <Image src="/svg/logo.svg" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1 mt-[-2px]" />
               <span className="ml-1">PreView</span>
             </div>
           </Link>

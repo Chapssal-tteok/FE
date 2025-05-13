@@ -59,12 +59,12 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <div className="absolute inset-0 bg-[url(/Gradients.svg)] bg-center bg-cover opacity-50 z-0"></div>
+      <div className="absolute inset-0 bg-[url(/svg/Gradients.svg)] bg-center bg-cover opacity-50 z-0"></div>
       <header className="absolute top-0 w-full p-4 z-50">
         <div className="container flex justify-between items-center mx-auto px-4">
           <Link href="/" className="text-2xl font-bold">
             <div className="flex items-center">
-              <Image src="/logo.svg" alt="PreView Logo" width={20} height={20} className="mb-1 mt-[-2px]" />
+              <Image src="/svg/logo.svg" alt="PreView Logo" width={20} height={20} className="mb-1 mt-[-2px]" />
               <span className="ml-1">PreView</span>
             </div>
           </Link>
@@ -91,7 +91,7 @@ export default function Home() {
       <main className="container flex flex-col items-center justify-center min-h-screen px-4 text-center">
         <div className="relative z-10 space-y-12 flex flex-col items-start justify-center h-full mr-180 mb-10">
           <div className="flex items-center space-x-2">
-            <Image src="/logo.svg" alt="icon" width={20} height={20} className="w-8 h-8 md:h-12 md:w-12 mt-[-14px]"/>
+            <Image src="/svg/logo.svg" alt="icon" width={20} height={20} className="w-8 h-8 md:h-12 md:w-12 mt-[-14px]"/>
             <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl relative inline-block">
               <span className="invisible">{text}</span>
               <span className="absolute top-0 left-0">{typedText}</span>
@@ -114,10 +114,10 @@ export default function Home() {
 
         <div className="fixed bottom-8 right-8 flex space-x-4">
           <a href="mailto:chacha09@ewha.ac.kr" className="hover:opacity-50 transition-opacity">
-            <Image src="/email-icon.svg" alt="Email" width={32} height={32} />
+            <Image src="/svg/email-icon.svg" alt="Email" width={32} height={32} />
           </a>
           <a href="https://github.com/Chapssal-tteok" target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
-            <Image src="/github-icon.svg" alt="GitHub" width={32} height={32} />
+            <Image src="/svg/github-icon.svg" alt="GitHub" width={32} height={32} />
           </a>
         </div>
       </main>

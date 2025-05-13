@@ -189,7 +189,7 @@ export default function MyPage() {
         <div className="flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold">
             <div className="flex items-center">
-              <Image src="/logo.svg" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1 mt-[-2px]" />
+              <Image src="/svg/logo.svg" alt="PreView Logo" width={20} height={20} className="w-5 h-5 mb-1 mt-[-2px]" />
               <span className="ml-1">PreView</span>
             </div>
           </Link>

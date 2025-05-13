@@ -62,11 +62,11 @@ export default function LogIn() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-white p-4 overflow-hidden">
-      <div className="absolute inset-0 bg-[url(/Gradients.svg)] bg-center bg-cover opacity-30 z-0"></div>
+      <div className="absolute inset-0 bg-[url(/svg/Gradients.svg)] bg-center bg-cover opacity-30 z-0"></div>
       
       <Link href="/" className="absolute top-8 left-1/2 -translate-x-1/2 text-2xl font-bold z-10">
         <div className="flex items-center">
-          <Image src="/logo.svg" alt="PreView Logo" width={20} height={20} className="mb-1 mt-[-2px]" />
+          <Image src="/svg/logo.svg" alt="PreView Logo" width={20} height={20} className="mb-1 mt-[-2px]" />
           <span className="ml-1">PreView</span>
         </div>
       </Link>
