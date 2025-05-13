@@ -2,7 +2,7 @@
 "use client"
 
 import { ResumeControllerService, InterviewControllerService, UserControllerService } from "@/api-client"
-import { UpdateUserDTO, SimpleResumeDTO, SimpleInterviewDTO, UserInfoDTO } from "@/api-client"
+import { UpdateUserDTO, ResumeDTO, InterviewDTO, UserInfoDTO } from "@/api-client"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -49,7 +49,7 @@ export default function MyPage() {
       const response = await UserControllerService.getMyResumes()
       if (response.result) {
         if (Array.isArray(response.result)) {
-          setResumes(response.result.map((resume: SimpleResumeDTO) => ({
+          setResumes(response.result.map((resume: ResumeDTO) => ({
             resumeId: String(resume.resumeId),
             title: resume.title || "",
             company: resume.company || "",
@@ -71,7 +71,7 @@ export default function MyPage() {
       const response = await UserControllerService.getMyInterviews()
       if (response.result) {
         if (Array.isArray(response.result)) {
-          setInterviews(response.result.map((interview: SimpleInterviewDTO) => ({
+          setInterviews(response.result.map((interview: InterviewDTO) => ({
             interviewId: String(interview.interviewId),
             title: interview.title || "",
             company: interview.company || "",
