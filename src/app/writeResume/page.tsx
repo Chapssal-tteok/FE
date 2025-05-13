@@ -76,9 +76,8 @@ export default function NewResume() {
       }
 
       // 문항 및 답변 생성
-      for (const [index, q] of questions.entries()) {
+      for (const q of questions) {
         const createResumeQaRequest: CreateResumeQaDTO = {
-          number: index + 1,
           question: q.question,
           answer: q.answer,
         };
@@ -132,9 +131,8 @@ export default function NewResume() {
       }
 
       // 문항 및 답변 생성
-      for (const [index, q] of questions.entries()) {
+      for (const q of questions) {
         const createInterviewQaRequest: CreateInterviewQaDTO = {
-          number: index + 1,
           question: q.question,
         };
   
