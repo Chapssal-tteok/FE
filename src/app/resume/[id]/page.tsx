@@ -1,7 +1,7 @@
 // resume/[id]/page.tsx
 "use client"
 
-import { ResumeControllerService } from "@/api-client"
+import { ResumeControllerService, ResumeQaControllerService } from "@/api-client"
 import { useEffect, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -30,20 +30,28 @@ export default function ResumePage() {
 
   const fetchResume = useCallback(async (id: string) => {
     try {
-      const response = await ResumeControllerService.getResume(Number(id))
+      const [resumeResponse, qaResponse] = await Promise.all([
+        ResumeControllerService.getResume(Number(id)),
+        ResumeQaControllerService.getResumeQasByResumeId(Number(id))
+      ])
 
-      if(!response || !response.result) {
+      if(!resumeResponse || !resumeResponse.result) {
         throw new Error("Failed to fetch resume data")
       }
 
-      const { resumeId, title, company, position, content, createdAt, updatedAt } = response.result
+      const { resumeId, title, company, position, createdAt, updatedAt } = resumeResponse.result
+      
+      // QA 내용을 하나의 문자열로 결합
+      const content = qaResponse.result?.map(qa => 
+        `Q: ${qa.question}\nA: ${qa.answer || ''}`
+      ).join('\n\n') ?? ""
       
       setResume({
         id: resumeId?.toString() ?? "",
         title: title ?? "제목 없음",
         company: company ?? "",
         position: position ?? "",
-        content: content ?? "",
+        content,
         createdAt: createdAt ?? "",
         updatedAt: updatedAt ?? ""
       })
