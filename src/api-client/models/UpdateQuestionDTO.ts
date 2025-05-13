@@ -2,11 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type UpdateInterviewQaDTO = {
-    question?: string;
+export type UpdateQuestionDTO = {
+    /**
+     * 수정할 질문 텍스트
+     */
+    question: string;
+    /**
+     * 질문 음성 URL
+     */
     questionAudio?: string;
-    answer?: string;
-    answerAudio?: string;
-    analysis?: string;
 };
 

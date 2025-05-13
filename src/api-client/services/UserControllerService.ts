@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ApiResponseListSimpleInterviewDTO } from '../models/ApiResponseListSimpleInterviewDTO';
-import type { ApiResponseListSimpleResumeDTO } from '../models/ApiResponseListSimpleResumeDTO';
+import type { ApiResponseListInterviewDTO } from '../models/ApiResponseListInterviewDTO';
+import type { ApiResponseListResumeDTO } from '../models/ApiResponseListResumeDTO';
 import type { ApiResponseUserExistenceDTO } from '../models/ApiResponseUserExistenceDTO';
 import type { ApiResponseUserInfoDTO } from '../models/ApiResponseUserInfoDTO';
 import type { UpdateUserDTO } from '../models/UpdateUserDTO';
@@ -43,10 +43,10 @@ export class UserControllerService {
     /**
      * 현재 로그인한 사용자의 자기소개서 목록 조회
      * 현재 로그인한 사용자의 자기소개서 목록을 조회합니다.
-     * @returns ApiResponseListSimpleResumeDTO OK
+     * @returns ApiResponseListResumeDTO OK
      * @throws ApiError
      */
-    public static getMyResumes(): CancelablePromise<ApiResponseListSimpleResumeDTO> {
+    public static getMyResumes(): CancelablePromise<ApiResponseListResumeDTO> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/auth/users/resumes',
@@ -55,10 +55,10 @@ export class UserControllerService {
     /**
      * 현재 로그인한 사용자의 면접 목록 조회
      * 현재 로그인한 사용자의 면접 목록을 조회합니다.
-     * @returns ApiResponseListSimpleInterviewDTO OK
+     * @returns ApiResponseListInterviewDTO OK
      * @throws ApiError
      */
-    public static getMyInterviews(): CancelablePromise<ApiResponseListSimpleInterviewDTO> {
+    public static getMyInterviews(): CancelablePromise<ApiResponseListInterviewDTO> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/auth/users/interviews',

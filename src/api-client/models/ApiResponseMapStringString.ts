@@ -2,11 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { SimpleResumeDTO } from './SimpleResumeDTO';
-export type ApiResponseListSimpleResumeDTO = {
+export type ApiResponseMapStringString = {
     isSuccess?: boolean;
     code?: string;
     message?: string;
-    result?: Array<SimpleResumeDTO>;
+    result?: Record<string, string>;
 };
 

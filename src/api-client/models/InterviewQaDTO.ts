@@ -5,7 +5,7 @@
 export type InterviewQaDTO = {
     interviewQaId?: number;
     interviewId?: number;
-    number?: number;
+    orderIndex?: number;
     question?: string;
     questionAudio?: string;
     answer?: string;

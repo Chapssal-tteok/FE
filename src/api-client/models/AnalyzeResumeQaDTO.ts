@@ -2,18 +2,22 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type CreateResumeQaDTO = {
+export type AnalyzeResumeQaDTO = {
     /**
      * 자기소개서 질문
      */
     question: string;
     /**
-     * 자기소개서 답변 (선택)
+     * 자기소개서 답변
      */
-    answer?: string;
+    answer: string;
     /**
-     * AI 분석 내용 (선택)
+     * 지원 회사명
      */
-    analysis?: string;
+    company: string;
+    /**
+     * 지원 직무명
+     */
+    position: string;
 };
 

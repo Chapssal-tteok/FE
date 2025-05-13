@@ -5,7 +5,7 @@
 export type ResumeQaDTO = {
     resumeQaId?: number;
     resumeId?: number;
-    number?: number;
+    orderIndex?: number;
     question?: string;
     answer?: string;
     analysis?: string;

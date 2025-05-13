@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { SimpleInterviewDTO } from './SimpleInterviewDTO';
-export type ApiResponseListSimpleInterviewDTO = {
+import type { InterviewQaDTO } from './InterviewQaDTO';
+export type ApiResponseListInterviewQaDTO = {
     isSuccess?: boolean;
     code?: string;
     message?: string;
-    result?: Array<SimpleInterviewDTO>;
+    result?: Array<InterviewQaDTO>;
 };
 

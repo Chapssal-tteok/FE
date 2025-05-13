@@ -2,18 +2,18 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type CreateResumeQaDTO = {
+export type AnalyzeAnswerDTO = {
     /**
-     * 자기소개서 질문
+     * 분석할 질문
      */
     question: string;
     /**
-     * 자기소개서 답변 (선택)
+     * 사용자의 답변
      */
-    answer?: string;
+    answer: string;
     /**
-     * AI 분석 내용 (선택)
+     * 자기소개서 전체 내용
      */
-    analysis?: string;
+    resume: string;
 };
 
