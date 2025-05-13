@@ -1,7 +1,7 @@
 // chat/[id]/page.tsx
 "use client"
 
-import { ResumeControllerService } from "@/api-client"
+import { ResumeControllerService, ResumeQaControllerService } from "@/api-client"
 import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -13,8 +13,6 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { RefreshCw, Send, Bot, Video } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
-import { analyzeResume } from "@/lib/analyzeResumeClient"
-import { getChatResponse } from "@/lib/getChatResponse"
 
 interface Message {
   role: "user" | "AI"
@@ -49,29 +47,45 @@ export default function Chat() {
       try {
         setIsLoading(true)
 
-        // 자기소개서 데이터 가져오기
-        const resumeResponse = await ResumeControllerService.getResume(Number(resumeId))
+        // 자기소개서 데이터와 문답 데이터 가져오기
+        const [resumeResponse, qaResponse] = await Promise.all([
+          ResumeControllerService.getResume(Number(resumeId)),
+          ResumeQaControllerService.getResumeQasByResumeId(Number(resumeId))
+        ])
+
         if (!resumeResponse.result) {
           throw new Error("자기소개서 정보를 불러올 수 없습니다.")
         }
+
         const resumeData = resumeResponse.result
-        const { resumeQas, company, position } = resumeData
+        const { company, position } = resumeData
 
-        // 문항과 답변 조합
-        const combinedContent = resumeQas
-          ? resumeQas.map((qa, index) => `문항 ${index + 1}: ${qa.question}\n답변: ${qa.answer}`).join('\n\n')
-          : "자기소개서 문항이 없습니다.";
-
-        // ChatGPT에 자기소개서 분석 요청
         if (!company || !position) {
           throw new Error("회사명 또는 직무 정보가 누락되었습니다.");
         }
-        const feedback = await analyzeResume(combinedContent, company, position)
+
+        // 각 문답에 대해 분석 요청
+        const analysisPromises = qaResponse.result?.map(async (qa) => {
+          const analysisResponse = await ResumeQaControllerService.analyzeResumeQa(
+            Number(resumeId),
+            qa.resumeQaId!,
+            {
+              question: qa.question!,
+              answer: qa.answer!,
+              company: company,
+              position: position
+            }
+          );
+          return analysisResponse.result?.analysis || "";
+        }) || [];
+
+        const analyses = await Promise.all(analysisPromises);
+        const feedback = analyses.join("\n\n");
         
         // 초기 메시지 설정
         setMessages([
           { role: "AI", content: "안녕하세요! 자기소개서 분석을 도와드리겠습니다." },
-          { role: "AI", content: Array.isArray(feedback) ? feedback.join("\n") : feedback || "자기소개서 분석이 완료되었습니다." }
+          { role: "AI", content: feedback || "자기소개서 분석이 완료되었습니다." }
         ])
       } catch (error) {
         console.error("Error fetching feedback", error)
@@ -89,19 +103,27 @@ export default function Chat() {
 
     try {
       setIsLoading(true)
+      setMessages((prev) => [...prev, { role: "user", content: message }])
+      
+      // 사용자 메시지에 대한 응답 생성
+      const response = await ResumeQaControllerService.analyzeResumeQa(
+        Number(resumeId),
+        0, // 임시 QA ID
+        {
+          question: message,
+          answer: "",
+          company: "",
+          position: ""
+        }
+      );
 
-      const reply = await getChatResponse(message, 'gpt-4', 'text')
-      if (typeof reply !== 'string') throw new Error('Invalid response type')
-
-      setMessages((prev) => [...prev, 
-        { role: "user", content: message },
-        { role: "AI", content: reply }
-      ])
+      const reply = response.result?.analysis || "죄송합니다. 응답을 생성하는 중 오류가 발생했습니다.";
+      
+      setMessages((prev) => [...prev, { role: "AI", content: reply }])
       setMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
       setMessages(prev => [...prev, 
-        { role: "user", content: message },
         { role: "AI", content: "죄송합니다. 응답을 생성하는 중 오류가 발생했습니다." }
       ])
     } finally {
