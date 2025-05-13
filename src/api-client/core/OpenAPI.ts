@@ -20,9 +20,9 @@ export type OpenAPIConfig = {
 };
 
 export const OpenAPI: OpenAPIConfig = {
-    BASE: "https://www.preview.ai.kr/swagger-ui/index.html",
+    BASE: "https://www.preview.ai.kr",
     VERSION: '1.0.0',
-    WITH_CREDENTIALS: false,
+    WITH_CREDENTIALS: true,
     CREDENTIALS: 'include',
     TOKEN: async () => localStorage.getItem("token") ?? "",
     USERNAME: undefined,
