@@ -4,7 +4,7 @@
 import { ResumeControllerService, InterviewControllerService, UserControllerService } from "@/api-client"
 import { UpdateUserDTO, ResumeDTO, InterviewDTO, UserInfoDTO } from "@/api-client"
 import { useState, useEffect, useCallback } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { ResumeList } from "@/components/mypage/ResumeList"
