@@ -33,8 +33,9 @@ interface Interview {
 }
 
 export default function InterviewPage() {
-  const resumeId = useParams().resume_id as string
-  const interviewId = useParams().id as string
+  const params = useParams();
+  const resumeId = params.resume_id as string;
+  const interviewId = params.id as string;
   const { isLoggedIn } = useAuth()
   const router = useRouter()
   const [interview, setInterview] = useState<Interview | null>(null)
@@ -165,10 +166,13 @@ export default function InterviewPage() {
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/login")
+    } else if (!resumeId || !interviewId || isNaN(Number(resumeId)) || isNaN(Number(interviewId))) {
+      console.error("Invalid resumeId or interviewId:", { resumeId, interviewId });
+      router.push("/writeResume");
     } else {
       loadInterview()
     }
-  }, [isLoggedIn, router, interviewId, loadInterview])
+  }, [isLoggedIn, router, interviewId, resumeId, loadInterview])
 
   useEffect(() => {
     scrollToBottom()
