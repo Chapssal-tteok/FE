@@ -49,7 +49,28 @@ export default function InterviewPage() {
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([])
   const [showFollowUpQuestions, setShowFollowUpQuestions] = useState<Record<string, boolean>>({})
 
-  const fetchAndUpdateQuestions = async (company: string, position: string, resumeContent: string) => {
+  const speakText = useCallback(async (text: string) => {
+    try {
+      const response = await VoiceControllerService.textToSpeech({
+        text
+      });
+
+      if (response.result) {
+        const audioBlob = new Blob([response.result], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        if (audioRef.current) {
+          audioRef.current.src = audioUrl;
+          await audioRef.current.play();
+        }
+      } else {
+        throw new Error("음성 합성에 실패했습니다");
+      }
+    } catch (error) {
+      console.error("TTS 오류:", error);
+    }
+  }, []);
+
+  const fetchAndUpdateQuestions = useCallback(async (company: string, position: string, resumeContent: string) => {
     // 면접 질문 생성
     await InterviewQaControllerService.generateInterviewQuestion(
       Number(interviewId),
@@ -81,33 +102,12 @@ export default function InterviewPage() {
       }
     }
     return updatedQas;
-  }
+  }, [interviewId, isVoiceMode, speakText]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
   
-  const speakText = useCallback(async (text: string) => {
-    try {
-      const response = await VoiceControllerService.textToSpeech({
-        text
-      });
-
-      if (response.result) {
-        const audioBlob = new Blob([response.result], { type: 'audio/mp3' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        if (audioRef.current) {
-          audioRef.current.src = audioUrl;
-          await audioRef.current.play();
-        }
-      } else {
-        throw new Error("음성 합성에 실패했습니다");
-      }
-    } catch (error) {
-      console.error("TTS 오류:", error);
-    }
-  }, []);
-
   const loadInterview = useCallback(async () => {
     setIsLoading(true)
     try {  
