@@ -85,25 +85,60 @@ export default function Chat() {
         const feedbackPromises = qaResponse.result?.map(async (qa) => {
           if (!qa.resumeQaId || !qa.question || !qa.answer) return null;
           
-          const analysisResponse = await ResumeQaControllerService.analyzeResumeQa(
-            Number(resumeId),
-            qa.resumeQaId,
-            {
-              question: qa.question,
-              resume: qa.answer,
-              company: company,
-              position: position
-            }
-          );
+          try {
+            // 타임아웃 설정
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('피드백 생성 시간 초과')), 30000); // 30초 타임아웃
+            });
 
-          return {
-            question: qa.question,
-            answer: qa.answer,
-            feedback: analysisResponse.result?.analysis || ""
-          };
+            const analysisResponse = await Promise.race([
+              ResumeQaControllerService.analyzeResumeQa(
+                Number(resumeId),
+                qa.resumeQaId,
+                {
+                  question: qa.question,
+                  resume: qa.answer,
+                  company: company,
+                  position: position
+                }
+              ) as Promise<any>,
+              timeoutPromise
+            ]) as any;
+
+            if (!analysisResponse?.result?.analysis) {
+              console.warn(`피드백이 비어있습니다: ${qa.resumeQaId}`);
+              return null;
+            }
+
+            return {
+              question: qa.question,
+              answer: qa.answer,
+              feedback: analysisResponse.result.analysis
+            };
+          } catch (error) {
+            console.error(`피드백 생성 실패 (QA ID: ${qa.resumeQaId}):`, error);
+            return null;
+          }
         }) || [];
 
-        const feedbacks = (await Promise.all(feedbackPromises)).filter((feedback): feedback is QaFeedback => feedback !== null);
+        // 진행 상황 표시를 위한 상태 업데이트
+        let completedCount = 0;
+        const totalCount = feedbackPromises.length;
+        
+        const feedbacks = (await Promise.all(
+          feedbackPromises.map(async (promise, index) => {
+            const result = await promise;
+            completedCount++;
+            console.log(`피드백 생성 진행 중: ${completedCount}/${totalCount}`);
+            return result;
+          })
+        )).filter((feedback): feedback is QaFeedback => feedback !== null);
+
+        if (feedbacks.length === 0) {
+          console.warn("생성된 피드백이 없습니다");
+          alert("피드백 생성에 실패했습니다. 다시 시도해주세요.");
+        }
+
         setQaFeedbacks(feedbacks);
       } catch (error) {
         console.error("피드백 생성 중 오류 발생:", error);
