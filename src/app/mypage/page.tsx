@@ -34,7 +34,6 @@ interface Interview {
 }
 
 export default function MyPage() {
-  const { resumeId } = useParams()
   const { isLoggedIn, logout } = useAuth()
   const router = useRouter()
   const [resumes, setResumes] = useState<Resume[]>([])
