@@ -63,28 +63,18 @@ export function NavUser({
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <User className="h-6 w-6 flex-shrink-0" />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.id}</span>
-                  <span className="truncate text-xs">{user.email}</span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles className="mr-2 h-4 w-4" />
                 <Link href="/mypage">
-                  <Button>My Page</Button>
+                  <Button variant="ghost">My Page</Button>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <Button onClick={handleLogout}>Log out</Button>
+              <Button variant="ghost" onClick={handleLogout}>Log out</Button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

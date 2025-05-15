@@ -19,12 +19,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isCollapsed = state === "collapsed"
   const [resumeHistory, setResumeHistory] = useState<ResumeHistory[]>([])
   const [interviewHistory, setInterviewHistory] = useState<InterviewHistory[]>([])
+  const [userInfo, setUserInfo] = useState<{ id: string; email: string }>({
+    id: user?.username || "Guest",
+    email: user?.email || "guest@example.com",
+  })
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resumeRes = await UserControllerService.getMyResumes()
-        const interviewRes = await UserControllerService.getMyInterviews()
+        const [resumeRes, interviewRes, userInfoRes] = await Promise.all([
+          UserControllerService.getMyResumes(),
+          UserControllerService.getMyInterviews(),
+          UserControllerService.getUserInfo()
+        ])
 
         setResumeHistory(
           (resumeRes.result || []).map((item) => ({
@@ -41,6 +48,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             date: new Date(item.createdAt ?? "").toLocaleDateString(),
           }))
         )
+
+        if (userInfoRes.result) {
+          setUserInfo({
+            id: userInfoRes.result.username || "Guest",
+            email: userInfoRes.result.email || "guest@example.com",
+          })
+        }
       } catch (error) {
         console.error("Error fetching sidebar data", error)
       }
@@ -50,10 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [])
 
   const data = {
-    user: {
-      id: user?.username || "Guest",
-      email: user?.email || "guest@example.com",
-    },
+    user: userInfo,
     navMain: [
       {
         title: "Resume",
