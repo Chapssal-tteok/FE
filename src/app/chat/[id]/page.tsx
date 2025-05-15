@@ -90,7 +90,7 @@ export default function Chat() {
             qa.resumeQaId,
             {
               question: qa.question,
-              answer: qa.answer,
+              resume: qa.answer,
               company: company,
               position: position
             }
