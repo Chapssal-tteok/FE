@@ -184,7 +184,7 @@ export default function MyPage() {
   if (!isLoggedIn) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lime-50 to-white p-4">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-lime-50 to-white p-4">
       <header className="absolute top-0 w-full p-4 z-10">
         <div className="flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold">
