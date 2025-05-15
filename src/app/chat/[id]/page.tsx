@@ -1,31 +1,39 @@
 // chat/[id]/page.tsx
 "use client"
 
-import { ResumeControllerService, ResumeQaControllerService } from "@/api-client"
+import { ResumeControllerService, ResumeQaControllerService, InterviewControllerService } from "@/api-client"
 import { useEffect, useState, useRef } from "react"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { RefreshCw, Send, Bot, Video } from "lucide-react"
+import { Bot, Edit2, Save, X, MessageSquare } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
-interface Message {
-  role: "user" | "AI"
-  content: string;
+interface QaFeedback {
+  question: string;
+  answer: string;
+  feedback: string;
+}
+
+interface Question {
+  id: number;
+  question: string;
+  answer: string;
 }
 
 export default function Chat() {
   const { id: resumeId } = useParams();
   const { isLoggedIn } = useAuth()
   const router = useRouter()
-  const [message, setMessage] = useState("")
-  const [messages, setMessages] = useState<Message[]>([])
+  const [qaFeedbacks, setQaFeedbacks] = useState<QaFeedback[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [questions, setQuestions] = useState<Question[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -40,111 +48,157 @@ export default function Chat() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [qaFeedbacks])
 
-  useEffect(() => {
-    const fetchInitialMessages = async () => {
+  const fetchInitialMessages = async () => {
+    try {
+      setIsLoading(true)
+
+      // 자기소개서 데이터와 문답 데이터 가져오기
+      const [resumeResponse, qaResponse] = await Promise.all([
+        ResumeControllerService.getResume(Number(resumeId)),
+        ResumeQaControllerService.getResumeQasByResumeId(Number(resumeId))
+      ])
+
+      if (!resumeResponse.result) {
+        throw new Error("자기소개서 정보를 불러올 수 없습니다.")
+      }
+
+      const resumeData = resumeResponse.result
+      const { company, position } = resumeData
+
+      if (!company || !position) {
+        throw new Error("회사명 또는 직무 정보가 누락되었습니다.");
+      }
+
+      // questions 상태 업데이트
+      if (qaResponse.result) {
+        setQuestions(qaResponse.result.map((qa, index) => ({
+          id: qa.resumeQaId ?? index + 1,
+          question: qa.question ?? "",
+          answer: qa.answer ?? ""
+        })))
+      }
+
+      // 각 문답에 대해 분석 요청
       try {
-        setIsLoading(true)
-
-        // 자기소개서 데이터와 문답 데이터 가져오기
-        const [resumeResponse, qaResponse] = await Promise.all([
-          ResumeControllerService.getResume(Number(resumeId)),
-          ResumeQaControllerService.getResumeQasByResumeId(Number(resumeId))
-        ])
-
-        if (!resumeResponse.result) {
-          throw new Error("자기소개서 정보를 불러올 수 없습니다.")
-        }
-
-        const resumeData = resumeResponse.result
-        const { company, position } = resumeData
-
-        if (!company || !position) {
-          throw new Error("회사명 또는 직무 정보가 누락되었습니다.");
-        }
-
-        // 각 문답에 대해 분석 요청
-        const analysisPromises = qaResponse.result?.map(async (qa) => {
+        const feedbackPromises = qaResponse.result?.map(async (qa) => {
+          if (!qa.resumeQaId || !qa.question || !qa.answer) return null;
+          
           const analysisResponse = await ResumeQaControllerService.analyzeResumeQa(
             Number(resumeId),
-            qa.resumeQaId!,
+            qa.resumeQaId,
             {
-              question: qa.question!,
-              answer: qa.answer!,
+              question: qa.question,
+              answer: qa.answer,
               company: company,
               position: position
             }
           );
-          return analysisResponse.result?.analysis || "";
+
+          return {
+            question: qa.question,
+            answer: qa.answer,
+            feedback: analysisResponse.result?.analysis || ""
+          };
         }) || [];
 
-        const analyses = await Promise.all(analysisPromises);
-        const feedback = analyses.join("\n\n");
-        
-        // 초기 메시지 설정
-        setMessages([
-          { role: "AI", content: "안녕하세요! 자기소개서 분석을 도와드리겠습니다." },
-          { role: "AI", content: feedback || "자기소개서 분석이 완료되었습니다." }
-        ])
+        const feedbacks = (await Promise.all(feedbackPromises)).filter((feedback): feedback is QaFeedback => feedback !== null);
+        setQaFeedbacks(feedbacks);
       } catch (error) {
-        console.error("Error fetching feedback", error)
-        setMessages([{ role: "AI", content: "죄송합니다. 자기소개서 분석 중 오류가 발생했습니다." }])
-      } finally {
-        setIsLoading(false)
+        console.error("피드백 생성 중 오류 발생:", error);
+        // 피드백 생성 실패 시에도 문답은 표시
+        setQaFeedbacks([]);
       }
-    }
-
-    fetchInitialMessages()
-  }, [resumeId])
-
-  const handleSendMessage = async () => {
-    if(!message.trim()) return
-
-    try {
-      setIsLoading(true)
-      setMessages((prev) => [...prev, { role: "user", content: message }])
-      
-      // 사용자 메시지에 대한 응답 생성
-      const response = await ResumeQaControllerService.analyzeResumeQa(
-        Number(resumeId),
-        0, // 임시 QA ID
-        {
-          question: message,
-          answer: "",
-          company: "",
-          position: ""
-        }
-      );
-
-      const reply = response.result?.analysis || "죄송합니다. 응답을 생성하는 중 오류가 발생했습니다.";
-      
-      setMessages((prev) => [...prev, { role: "AI", content: reply }])
-      setMessage("")
     } catch (error) {
-      console.error("Error sending message:", error)
-      setMessages(prev => [...prev, 
-        { role: "AI", content: "죄송합니다. 응답을 생성하는 중 오류가 발생했습니다." }
-      ])
+      console.error("데이터 로드 중 오류 발생:", error);
+      // 에러 발생 시에도 문답은 표시
+      setQaFeedbacks([]);
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+  useEffect(() => {
+    fetchInitialMessages()
+  }, [resumeId])
+
+  const handleEditClick = () => {
+    setIsEditing(true)
+  }
+
+  const handleSaveClick = async () => {
+    try {
+      if (!resumeId || typeof resumeId !== 'string') return
+
+      // 각 문항 업데이트
+      for (const q of questions) {
+        if (q.id > 0) {
+          try {
+            // 기존 문항 업데이트
+            await ResumeQaControllerService.updateResumeQa(Number(resumeId), q.id, {
+              question: q.question,
+              answer: q.answer
+            })
+          } catch (error) {
+            console.error(`문항 ${q.id} 업데이트 중 오류 발생:`, error);
+            throw new Error("문항 업데이트 중 오류가 발생했습니다.");
+          }
+        }
+      }
+
+      setIsEditing(false)
+      await fetchInitialMessages()
+    } catch (error) {
+      console.error("저장 중 오류 발생:", error);
+      alert("저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+    }
+  }
+
+  const handleCancelClick = () => {
+    setIsEditing(false)
+  }
+
+  const handleInterviewClick = async () => {
+    try {
+      if (!resumeId) return;
+
+      // 자기소개서 데이터 가져오기
+      const resumeResponse = await ResumeControllerService.getResume(Number(resumeId));
+      if (!resumeResponse.result) {
+        throw new Error("자기소개서 정보를 불러올 수 없습니다.");
+      }
+
+      const { company, position } = resumeResponse.result;
+      if (!company || !position) {
+        throw new Error("회사명 또는 직무 정보가 누락되었습니다.");
+      }
+
+      // 면접 연습 세션 생성
+      const interviewResponse = await InterviewControllerService.createInterview({
+        title: `${company} ${position} 면접 연습`,
+        company: company,
+        position: position
+      });
+
+      if (!interviewResponse.result?.interviewId) {
+        throw new Error("면접 연습 세션 생성에 실패했습니다.");
+      }
+
+      // 생성된 면접 연습 세션으로 이동
+      router.push(`/interview/${interviewResponse.result.interviewId}`);
+    } catch (error) {
+      console.error("면접 연습 세션 생성 중 오류 발생:", error);
+      alert("면접 연습 세션 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
     }
   }
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Sidebar */}
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          {/* Header (Breadcrumb 포함) */}
+          {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
@@ -166,81 +220,115 @@ export default function Chat() {
             </div>
           </header>
   
-          {/* Main Chat Area */}
-          <div className="flex-1 flex flex-col transition-all duration-300">
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-6">
+          {/* Main Content Area */}
+          <div className="flex-1 flex transition-all duration-300">
+            {/* Left Side - Questions and Answers */}
+            <div className="w-1/2 p-6 overflow-y-auto">
               <div className="max-w-3xl mx-auto space-y-6">
-                {messages.map((msg, index) => (
-                  <div key={index} className={`flex ${msg.role === "AI" ? "justify-start" : "justify-end"}`}>
-                    <div className={`relative max-w-[80%] ${msg.role === "AI" ? "bg-[#DEFFCF]/40" : "bg-lime-300"} rounded-2xl`}>
-                      {msg.role === "AI" && (
-                        <div className="absolute -left-10 top-2">
-                          <Bot className="w-6 h-6 text-lime-600" />
-                        </div>
-                      )}
-                      <div className="p-4">
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
-                      </div>
-                      {msg.role === "AI" && index === messages.length - 1 && (
-                        <div className="absolute bottom-2 right-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => setMessages([])}
-                            disabled={isLoading}
-                            className="h-6 w-6 hover:bg-[#DEFFCF]"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="relative max-w-[80%] bg-[#DEFFCF] rounded-2xl">
-                      <div className="absolute -left-10 top-2">
-                        <Bot className="w-6 h-6 text-gray-600" />
-                      </div>
-                      <div className="p-4">
-                        <p>답변을 생성하는 중...</p>
+                {isEditing ? (
+                  questions.map((q, index) => (
+                    <div key={q.id} className="bg-white rounded-2xl p-6 shadow-md">
+                      <h3 className="text-lg font-semibold mb-4">문항 {index + 1}</h3>
+                      <div className="space-y-4">
+                        <Input
+                          value={q.question}
+                          onChange={(e) => {
+                            const newQuestions = questions.map((item) => 
+                              item.id === q.id ? { ...item, question: e.target.value } : item)
+                            setQuestions(newQuestions)
+                          }}
+                          className="bg-gray-50"
+                          placeholder="문항을 입력하세요"
+                        />
+                        <Textarea
+                          value={q.answer}
+                          onChange={(e) => {
+                            const newQuestions = questions.map((item) =>
+                              item.id === q.id ? { ...item, answer: e.target.value } : item)
+                            setQuestions(newQuestions)
+                          }}
+                          className="min-h-[150px] bg-gray-50"
+                          placeholder="답변을 입력하세요"
+                        />
                       </div>
                     </div>
-                  </div>
+                  ))
+                ) : (
+                  questions.map((q, index) => (
+                    <div key={q.id} className="bg-white rounded-2xl p-6 shadow-md">
+                      <h3 className="text-lg font-semibold mb-4">문항 {index + 1}</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="whitespace-pre-wrap">{q.question}</p>
+                        </div>
+                        <div>
+                          <p className="whitespace-pre-wrap">{q.answer}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
-                <div ref={messagesEndRef} />
+                
+                <div className="flex justify-end gap-2 mt-4">
+                  {isEditing ? (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="bg-gray-400 hover:bg-gray-500 text-white"
+                        onClick={handleCancelClick}
+                      >
+                        <X className="w-4 h-4 mr-2 mt-[-2px]" />
+                        취소
+                      </Button>
+                      <Button
+                        className="bg-lime-500 hover:bg-lime-600 text-white"
+                        onClick={handleSaveClick}
+                      >
+                        <Save className="w-4 h-4 mr-2 mt-[-2px]" />
+                        저장
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        className="bg-lime-500 hover:bg-lime-600 text-white"
+                        onClick={handleEditClick}
+                      >
+                        <Edit2 className="w-4 h-4 mt-[-2px]" />
+                        자기소개서 수정
+                      </Button>
+                      <Button
+                        className="bg-lime-500 hover:bg-lime-600 text-white"
+                        onClick={handleInterviewClick}
+                      >
+                        <MessageSquare className="w-4 h-4 mt-[-2px]" />
+                        면접 연습하기
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-  
-            {/* Input Area */}
-            <div className="p-6 bg-white">
-              <div className="max-w-3xl mx-auto">
-                <div className="flex gap-3">
-                  <Textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder="궁금한 점을 물어보세요"
-                    className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
-                    disabled={isLoading}
-                  />
-                  <div className="flex flex-col gap-3">
-                    <Button 
-                      className="bg-lime-500 hover:bg-lime-600 rounded-full px-6" 
-                      onClick={handleSendMessage}
-                      disabled={isLoading}
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
-                    <Link href={`/interview/${resumeId}`}>
-                      <Button className="bg-lime-500 hover:bg-lime-600 rounded-full px-6">
-                      <Video className="w-4 h-4" />
-                    </Button>          
-                    </Link>
+
+            {/* Right Side - Feedback */}
+            <div className="w-1/2 p-6 overflow-y-auto bg-gray-50">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-500 mb-4"></div>
+                    <p className="text-gray-600">자기소개서 피드백을 생성하고 있습니다...</p>
                   </div>
-                </div>
+                ) : (
+                  qaFeedbacks.map((qa, index) => (
+                    <div key={index} className="bg-white rounded-2xl p-6 shadow-md">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Bot className="w-6 h-6 text-lime-600" />
+                        <h3 className="text-lg font-semibold">피드백 {index + 1}</h3>
+                      </div>
+                      <p className="whitespace-pre-wrap">{qa.feedback}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
