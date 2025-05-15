@@ -146,6 +146,55 @@ export default function NewResume() {
     }
   }
 
+  const handleSaveResume = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // 입력 필드 검증
+    if (!company.trim() || !position.trim()) {
+      alert("회사명과 지원 직무를 입력해주세요.")
+      return
+    }
+
+    for (const q of questions) {
+      if (!q.question.trim() || !q.answer.trim()) {
+        alert("모든 문항과 답변을 작성해주세요.")
+        return
+      }
+    }
+
+    try {
+      // 새 자기소개서 생성
+      const createResumeRequest: CreateResumeDTO = {
+        title,
+        company,
+        position,
+      }
+
+      const resumeResponse = await ResumeControllerService.createResume(createResumeRequest)
+      const resumeId = resumeResponse.result?.resumeId
+
+      if(!resumeId) {
+        throw new Error("자기소개서 생성 실패")
+      }
+
+      // 문항 및 답변 생성
+      for (const q of questions) {
+        const createResumeQaRequest: CreateResumeQaDTO = {
+          question: q.question,
+          answer: q.answer,
+        };
+  
+        await ResumeQaControllerService.createResumeQa(resumeId, createResumeQaRequest);
+      }
+
+      alert("자기소개서가 저장되었습니다.")
+      router.push(`/resume/${resumeId}`)
+    } catch (error) {
+      console.error("저장 실패:", error)
+      alert("저장 중 오류가 발생했습니다.")
+    }
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden p-4">
       <div className="absolute inset-0 bg-[url(/svg/Gradients.svg)] bg-center bg-cover opacity-30 z-0"></div>
@@ -235,19 +284,33 @@ export default function NewResume() {
                       required
                     />
 
-                  {/*문항 추가, 삭제 버튼*/}
-                  <Button type="button" variant="outline" onClick={addQuestion} className="text-lime-600 mr-1">
-                    <PlusCircle className="w-4 h-4 mt-[-2px]" />
-                    문항 추가
-                  </Button>
+                    {/*문항 추가, 삭제 버튼*/}
+                    <div className="flex justify-between">
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" onClick={addQuestion} className="text-lime-600">
+                          <PlusCircle className="w-4 h-4 mt-[-2px]" />
+                          문항 추가
+                        </Button>
 
-                  <Button type="button" variant="outline" onClick={() => deleteQuestion(q.id)} className="text-red-500">
-                    <MinusCircle className="w-4 h-4 mt-[-2px]" />
-                    문항 삭제
-                  </Button>
-                </div>
+                        <Button type="button" variant="outline" onClick={() => deleteQuestion(q.id)} className="text-red-500">
+                          <MinusCircle className="w-4 h-4 mt-[-2px]" />
+                          문항 삭제
+                        </Button>
+                      </div>
+
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={handleSaveResume}
+                        className="text-black-500"
+                      >
+                        저장하기
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
+              
                 <div className="flex flex-col md:flex-row gap-4">
                 <Button 
                   type="submit" 
