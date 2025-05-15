@@ -88,7 +88,7 @@ export default function Chat() {
           try {
             // 타임아웃 설정
             const timeoutPromise = new Promise<never>((_, reject) => {
-              setTimeout(() => reject(new Error('피드백 생성 시간 초과')), 30000);
+              setTimeout(() => reject(new Error('피드백 생성 시간 초과')), 100000);
             });
 
             const analysisResponse = await Promise.race([
