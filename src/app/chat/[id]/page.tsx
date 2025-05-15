@@ -2,7 +2,7 @@
 "use client"
 
 import { ResumeControllerService, ResumeQaControllerService, InterviewControllerService } from "@/api-client"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
@@ -50,7 +50,7 @@ export default function Chat() {
     scrollToBottom()
   }, [qaFeedbacks])
 
-  const fetchInitialMessages = async () => {
+  const fetchInitialMessages = useCallback(async () => {
     try {
       setIsLoading(true)
 
@@ -87,8 +87,8 @@ export default function Chat() {
           
           try {
             // 타임아웃 설정
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('피드백 생성 시간 초과')), 30000); // 30초 타임아웃
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              setTimeout(() => reject(new Error('피드백 생성 시간 초과')), 30000);
             });
 
             const analysisResponse = await Promise.race([
@@ -101,9 +101,9 @@ export default function Chat() {
                   company: company,
                   position: position
                 }
-              ) as Promise<any>,
+              ),
               timeoutPromise
-            ]) as any;
+            ]);
 
             if (!analysisResponse?.result?.analysis) {
               console.warn(`피드백이 비어있습니다: ${qa.resumeQaId}`);
@@ -126,7 +126,7 @@ export default function Chat() {
         const totalCount = feedbackPromises.length;
         
         const feedbacks = (await Promise.all(
-          feedbackPromises.map(async (promise, index) => {
+          feedbackPromises.map(async (promise) => {
             const result = await promise;
             completedCount++;
             console.log(`피드백 생성 진행 중: ${completedCount}/${totalCount}`);
@@ -142,21 +142,19 @@ export default function Chat() {
         setQaFeedbacks(feedbacks);
       } catch (error) {
         console.error("피드백 생성 중 오류 발생:", error);
-        // 피드백 생성 실패 시에도 문답은 표시
         setQaFeedbacks([]);
       }
     } catch (error) {
       console.error("데이터 로드 중 오류 발생:", error);
-      // 에러 발생 시에도 문답은 표시
       setQaFeedbacks([]);
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [resumeId]);
 
   useEffect(() => {
     fetchInitialMessages()
-  }, [resumeId, fetchInitialMessages])
+  }, [fetchInitialMessages])
 
   const handleEditClick = () => {
     setIsEditing(true)
