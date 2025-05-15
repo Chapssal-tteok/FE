@@ -121,7 +121,7 @@ export default function Chat() {
 
   useEffect(() => {
     fetchInitialMessages()
-  }, [resumeId])
+  }, [resumeId, fetchInitialMessages])
 
   const handleEditClick = () => {
     setIsEditing(true)
