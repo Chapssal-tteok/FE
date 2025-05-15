@@ -10,7 +10,7 @@ export type AnalyzeResumeQaDTO = {
     /**
      * 자기소개서 답변
      */
-    answer: string;
+    resume: string;
     /**
      * 지원 회사명
      */
