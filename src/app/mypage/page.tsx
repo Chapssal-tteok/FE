@@ -111,10 +111,28 @@ export default function MyPage() {
 
   const handleDeleteResumes = async (selectedIds: string[]) => {
     try {
-      await Promise.all(selectedIds.map(() => ResumeControllerService.deleteResume(Number(resumeId))))
-      setResumes(prev => prev.filter(item => !selectedIds.includes(item.resumeId)))
+      // ID 유효성 검사
+      const validIds = selectedIds.filter(id => !isNaN(Number(id)) && Number(id) > 0)
+      
+      if (validIds.length === 0) {
+        throw new Error("유효한 이력서 ID가 없습니다.")
+      }
+
+      await Promise.all(
+        validIds.map(async (id) => {
+          try {
+            await ResumeControllerService.deleteResume(Number(id))
+          } catch (error) {
+            console.error(`이력서 ID ${id} 삭제 실패:`, error)
+            throw error
+          }
+        })
+      )
+      
+      setResumes(prev => prev.filter(item => !validIds.includes(item.resumeId)))
     } catch (error) {
-      console.error("Failed to delete resumes:", error)
+      console.error("이력서 삭제 중 오류 발생:", error)
+      alert("이력서 삭제 중 오류가 발생했습니다. 다시 시도해주세요.")
     }
   }
 
