@@ -34,7 +34,7 @@ export function DeleteAllRecordsDialog({
         <DialogHeader>
           <DialogTitle>모든 기록 삭제</DialogTitle>
           <DialogDescription className="pt-2">
-            <p className="text-red-600 font-medium mb-2">⚠️ 주의</p>
+            <div className="text-red-600 font-medium mb-2">⚠️ 주의</div>
             <p>
               정말로 모든 자기소개서와 면접 기록을 삭제하시겠습니까?
               <br />
