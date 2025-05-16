@@ -1,7 +1,7 @@
 // resume/[id]/page.tsx
 "use client"
 
-import { ResumeControllerService, ResumeQaControllerService } from "@/api-client"
+import { ResumeControllerService, ResumeQaControllerService, InterviewControllerService } from "@/api-client"
 import { useEffect, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -159,6 +159,41 @@ export default function ResumePage() {
     }
   }
 
+  const handleInterviewClick = async () => {
+    try {
+      if (!resumeId) return;
+
+      // 자기소개서 데이터 가져오기
+      const resumeResponse = await ResumeControllerService.getResume(Number(resumeId));
+      if (!resumeResponse.result) {
+        throw new Error("자기소개서 정보를 불러올 수 없습니다.");
+      }
+
+      const { company, position } = resumeResponse.result;
+      if (!company || !position) {
+        throw new Error("회사명 또는 직무 정보가 누락되었습니다.");
+      }
+
+      // 면접 연습 세션 생성
+      const interviewResponse = await InterviewControllerService.createInterview({
+        title: `${company} ${position} 면접 연습`,
+        company: company,
+        position: position
+      });
+
+      if (!interviewResponse.result?.interviewId) {
+        throw new Error("면접 연습 세션 생성에 실패했습니다.");
+      }
+
+      // 생성된 면접 연습 세션으로 이동
+      const interviewId = interviewResponse.result.interviewId;
+      router.push(`/interview/${interviewId}?resume_id=${resumeId}`);
+    } catch (error) {
+      console.error("면접 연습 세션 생성 중 오류 발생:", error);
+      alert("면접 연습 세션 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
+    }
+  }
+
   if(loading) return <p>Loading...</p>
   if(!resume) return <p>Resume not found</p>
 
@@ -303,6 +338,12 @@ export default function ResumePage() {
                   AI 피드백 받기
                 </Button>
               </Link>
+              <Button 
+                className="bg-lime-400 hover:bg-lime-500 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
+                onClick={handleInterviewClick}
+              >
+                면접 연습하기
+              </Button>
             </>
           )}
         </div>
