@@ -4,7 +4,7 @@
 import { InterviewControllerService, ResumeControllerService, InterviewQaControllerService, ResumeQaControllerService, VoiceControllerService } from "@/api-client"
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -34,8 +34,9 @@ interface Interview {
 
 export default function InterviewPage() {
   const params = useParams();
-  const resumeId = params.resume_id as string;
-  const interviewId = params.id as string;
+  const searchParams = useSearchParams();
+  const interviewId = params?.id;
+  const resumeId = searchParams?.get('resume_id');
   const { isLoggedIn } = useAuth()
   const router = useRouter()
   const [interview, setInterview] = useState<Interview | null>(null)
@@ -44,6 +45,7 @@ export default function InterviewPage() {
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -52,24 +54,116 @@ export default function InterviewPage() {
 
   const speakText = useCallback(async (text: string) => {
     try {
+      console.log("TTS 요청 텍스트:", text);
+      
+      // 이전 오디오 정리
+      if (currentAudio) {
+        currentAudio.onended = null;
+        currentAudio.pause();
+        currentAudio.src = '';
+        currentAudio.remove();
+        setCurrentAudio(null);
+      }
+
       const response = await VoiceControllerService.textToSpeech({
         text
       });
 
+      console.log("TTS 응답:", response);
+      
       if (response.result) {
-        const audioBlob = new Blob([response.result], { type: 'audio/mp3' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        if (audioRef.current) {
-          audioRef.current.src = audioUrl;
-          await audioRef.current.play();
+        // 새로운 오디오 요소 생성
+        const audio = new Audio();
+        
+        // URL인 경우
+        if (response.result.startsWith('http')) {
+          try {
+            // URL이 유효한지 확인
+            const url = new URL(response.result);
+            audio.src = url.href;
+            console.log("오디오 URL:", url.href);
+          } catch (urlError) {
+            console.error("잘못된 URL 형식:", response.result);
+            throw new Error("잘못된 오디오 URL 형식입니다");
+          }
+        } else if (response.result.startsWith('data:audio')) {
+          // data URL 형식인 경우
+          audio.src = response.result;
+        } else {
+          // Base64 문자열인 경우
+          try {
+            const byteCharacters = atob(response.result);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const audioData = new Uint8Array(byteNumbers);
+            const audioBlob = new Blob([audioData], { type: 'audio/mp3' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audio.src = audioUrl;
+          } catch (e) {
+            console.error("Base64 디코딩 실패:", e);
+            throw new Error("오디오 데이터 형식이 올바르지 않습니다");
+          }
         }
+
+        // 오디오 로드 완료 후 재생
+        audio.onloadeddata = async () => {
+          try {
+            console.log("오디오 로드 완료");
+            setCurrentAudio(audio);
+            await audio.play();
+          } catch (playError) {
+            console.error("오디오 재생 실패:", playError);
+            audio.remove();
+            setCurrentAudio(null);
+          }
+        };
+
+        // 재생이 끝나면 정리
+        audio.onended = () => {
+          console.log("오디오 재생 종료");
+          audio.onended = null;
+          audio.pause();
+          audio.src = '';
+          audio.remove();
+          setCurrentAudio(null);
+        };
+
+        // 오류 발생 시 정리
+        audio.onerror = (error) => {
+          console.error("오디오 로드 실패:", error);
+          console.error("오디오 소스:", audio.src);
+          audio.onended = null;
+          audio.pause();
+          audio.src = '';
+          audio.remove();
+          setCurrentAudio(null);
+        };
+
+        // 오디오 로드 시작
+        audio.load();
+
       } else {
         throw new Error("음성 합성에 실패했습니다");
       }
     } catch (error) {
       console.error("TTS 오류:", error);
     }
-  }, []);
+  }, [currentAudio]);
+
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => {
+      if (currentAudio) {
+        currentAudio.onended = null;
+        currentAudio.pause();
+        currentAudio.src = '';
+        currentAudio.remove();
+        setCurrentAudio(null);
+      }
+    };
+  }, [currentAudio]);
 
   const fetchAndUpdateQuestions = useCallback(async (company: string, position: string, resumeContent: string) => {
     // 면접 질문 생성
@@ -164,15 +258,20 @@ export default function InterviewPage() {
   }, [interviewId, isVoiceMode, speakText, fetchAndUpdateQuestions, resumeId])
 
   useEffect(() => {
+    console.log("Params:", params);
+    console.log("SearchParams:", searchParams);
+    console.log("InterviewId:", interviewId);
+    console.log("ResumeId:", resumeId);
+
     if (!isLoggedIn) {
       router.push("/login")
-    } else if (!resumeId || !interviewId || isNaN(Number(resumeId)) || isNaN(Number(interviewId))) {
-      console.error("Invalid resumeId or interviewId:", { resumeId, interviewId });
+    } else if (!interviewId || isNaN(Number(interviewId))) {
+      console.error("Invalid interviewId:", interviewId);
       router.push("/writeResume");
     } else {
       loadInterview()
     }
-  }, [isLoggedIn, router, interviewId, resumeId, loadInterview])
+  }, [isLoggedIn, router, interviewId, loadInterview])
 
   useEffect(() => {
     scrollToBottom()
@@ -188,7 +287,7 @@ export default function InterviewPage() {
 
     try {
       // 자기소개서 데이터 가져오기
-      const resumeResponse = await ResumeControllerService.getResume(Number(resumeId))
+      const resumeResponse = await ResumeControllerService.getResume(Number(interviewId))
       if (!resumeResponse.result) {
         throw new Error("자기소개서 정보를 불러올 수 없습니다.")
       }
@@ -265,12 +364,25 @@ export default function InterviewPage() {
   }
 
   // 음성 모드 전환
-  const toggleVoiceMode = () => {
-    setIsVoiceMode(!isVoiceMode)
-    if (!isVoiceMode && interview?.questions[interview.currentQuestionIndex]) {
-      speakText(interview.questions[interview.currentQuestionIndex].question)
+  const toggleVoiceMode = async () => {
+    // 이전 오디오 정리
+    if (currentAudio) {
+      currentAudio.onended = null;
+      currentAudio.pause();
+      currentAudio.src = '';
+      currentAudio.remove();
+      setCurrentAudio(null);
     }
-  }
+
+    setIsVoiceMode(!isVoiceMode);
+    if (!isVoiceMode && interview?.questions[interview.currentQuestionIndex]) {
+      try {
+        await speakText(interview.questions[interview.currentQuestionIndex].question);
+      } catch (error) {
+        console.error("음성 모드 전환 중 오류:", error);
+      }
+    }
+  };
 
   // STT 음성 모드: 사용자가 답변한 음성을 텍스트로 변환
   const startListening = async () => {
@@ -333,7 +445,14 @@ export default function InterviewPage() {
   };
 
   if (!isLoggedIn) return null
-  if (!interview) return <div className="p-4">면접 정보를 불러오지 못했습니다.</div>;
+  if (!interview) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-500 mx-auto mb-4"></div>
+        <p className="text-gray-600 text-lg">면접 정보를 불러오는 중입니다...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -509,7 +628,7 @@ export default function InterviewPage() {
             {/* Input Area */}
             <div className="p-6 bg-white">
               <div className="max-w-3xl mx-auto">
-                {interview.currentQuestionIndex < interview.questions.length && (
+                {interview && interview.questions.length > 0 && (
                   <form onSubmit={handleSubmit} className="flex gap-3">
                     <Textarea
                       value={input}
