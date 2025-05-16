@@ -219,7 +219,8 @@ export default function Chat() {
       }
 
       // 생성된 면접 연습 세션으로 이동
-      router.push(`/interview/${interviewResponse.result.interviewId}`);
+      const interviewId = interviewResponse.result.interviewId;
+      router.push(`/interview/${interviewId}?resume_id=${resumeId}`);
     } catch (error) {
       console.error("면접 연습 세션 생성 중 오류 발생:", error);
       alert("면접 연습 세션 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
