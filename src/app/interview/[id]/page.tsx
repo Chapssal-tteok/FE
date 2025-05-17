@@ -343,17 +343,43 @@ export default function InterviewPage() {
       setInterview((prev) => {
         if (!prev) return prev;
         const updated = [...prev.questions];
-        updated[prev.currentQuestionIndex] = {
-          ...updated[prev.currentQuestionIndex],
-          answer: input,
-          feedback: feedbackResponse,
-          followUpQuestions: isFollowUpQuestion ? [] : followUps, // 추가 질문에 대해서는 추가 질문을 생성하지 않음
-        };
+        
+        if (isFollowUpQuestion) {
+          // 추가 질문에 대한 답변이면 새로운 채팅 메시지로 추가
+          updated[prev.currentQuestionIndex] = {
+            ...updated[prev.currentQuestionIndex],
+            answer: input,
+            feedback: feedbackResponse,
+            followUpQuestions: [], // 추가 질문에 대한 답변이므로 더 이상의 추가 질문은 없음
+          };
+        } else {
+          // 기본 질문에 대한 답변이면 기존 방식대로 업데이트
+          updated[prev.currentQuestionIndex] = {
+            ...updated[prev.currentQuestionIndex],
+            answer: input,
+            feedback: feedbackResponse,
+            followUpQuestions: followUps,
+          };
+        }
+
+        // 추가 질문에 대한 답변이고 더 이상의 추가 질문이 없다면 새로운 면접 질문 생성
+        if (isFollowUpQuestion && !followUps.length) {
+          // 새로운 면접 질문 생성
+          const newQuestion = {
+            _id: String(Date.now()), // 임시 ID
+            question: "새로운 면접 질문이 곧 생성됩니다...",
+            answer: "",
+            feedback: "",
+            followUpQuestions: [],
+          };
+          updated.push(newQuestion);
+        }
+
         return {
           ...prev,
           questions: updated,
           currentQuestionIndex: 
-            prev.currentQuestionIndex + 1 < prev.questions.length
+            prev.currentQuestionIndex + 1 < updated.length
             ? prev.currentQuestionIndex + 1
             : prev.currentQuestionIndex,
         }
