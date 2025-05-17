@@ -460,10 +460,9 @@ export default function InterviewPage() {
               throw new Error("음성 인식 서버 응답이 없습니다.");
             }
 
-            // 응답 구조 검증 및 처리
-            const transcription = response.result.text || response.result.transcription || response.result;
-            
-            if (typeof transcription === 'string') {
+            // transcript 필드 확인
+            if (response.result.transcript) {
+              const transcription = response.result.transcript;
               if (transcription.trim() === '') {
                 throw new Error("음성 인식 결과가 비어있습니다. 다시 시도해주세요.");
               }
@@ -471,7 +470,7 @@ export default function InterviewPage() {
               setMediaError(null);
             } else {
               console.error("예상치 못한 응답 구조:", response.result);
-              throw new Error("음성 인식 결과를 처리할 수 없습니다.");
+              throw new Error("음성 인식 결과를 찾을 수 없습니다.");
             }
           } catch (sttError) {
             console.error("STT 처리 중 오류:", sttError);
