@@ -295,29 +295,45 @@ export default function InterviewPage() {
       )
       
       // 답변 분석
-      const analysisResponse = await InterviewQaControllerService.analyzeAnswer(
-        Number(interviewId),
-        Number(currentQuestion._id),
-        {
-          question: currentQuestion.question,
-          answer: input,
-          resume: resumeData ? JSON.stringify(resumeData) : "{}"
+      let feedbackResponse = "";
+      try {
+        const analysisResponse = await InterviewQaControllerService.analyzeAnswer(
+          Number(interviewId),
+          Number(currentQuestion._id),
+          {
+            question: currentQuestion.question,
+            answer: input,
+            resume: resumeData ? JSON.stringify(resumeData) : "{}"
+          }
+        )
+        
+        if (!analysisResponse?.result?.analysis) {
+          console.warn("피드백이 비어있습니다");
+          feedbackResponse = "피드백을 생성할 수 없습니다. 나중에 다시 시도해주세요.";
+        } else {
+          feedbackResponse = analysisResponse.result.analysis;
         }
-      )
-      
-      const feedbackResponse = analysisResponse.result?.analysis || ""
+      } catch (analysisError) {
+        console.error("피드백 생성 실패:", analysisError);
+        feedbackResponse = "피드백 생성 중 오류가 발생했습니다. 나중에 다시 시도해주세요.";
+      }
 
       // 추가 질문 생성
-      const followUpResponse = await InterviewQaControllerService.generateFollowUp(
-        Number(interviewId),
-        {
-          question: currentQuestion.question,
-          answer: input
-        }
-      )
-      
-      const followUps = followUpResponse.result?.question ? [followUpResponse.result.question] : []
-      setFollowUpQuestions(followUps)
+      let followUps: string[] = [];
+      try {
+        const followUpResponse = await InterviewQaControllerService.generateFollowUp(
+          Number(interviewId),
+          {
+            question: currentQuestion.question,
+            answer: input
+          }
+        )
+        
+        followUps = followUpResponse.result?.question ? [followUpResponse.result.question] : [];
+      } catch (followUpError) {
+        console.error("추가 질문 생성 실패:", followUpError);
+        // 추가 질문 생성 실패는 치명적이지 않으므로 계속 진행
+      }
 
       // 현재는 로컬 상태만 업데이트 (API 호출 없음)
       setInterview((prev) => {
