@@ -455,12 +455,16 @@ export default function InterviewPage() {
               throw new Error("음성 인식 서버 응답이 없습니다.");
             }
 
-            if (!response.result.transcription) {
-              throw new Error("음성 인식 결과가 없습니다.");
+            // 응답 구조 검증
+            if (typeof response.result === 'object' && 'transcription' in response.result) {
+              if (!response.result.transcription || response.result.transcription.trim() === '') {
+                throw new Error("음성 인식 결과가 비어있습니다. 다시 시도해주세요.");
+              }
+              setInput(response.result.transcription);
+              setMediaError(null);
+            } else {
+              throw new Error("음성 인식 결과 형식이 올바르지 않습니다.");
             }
-
-            setInput(response.result.transcription);
-            setMediaError(null);
           } catch (sttError) {
             console.error("STT 처리 중 오류:", sttError);
             if (sttError instanceof Error) {
@@ -478,13 +482,28 @@ export default function InterviewPage() {
         } finally {
           setIsListening(false);
           setAudioLevel(0);
-          if (animationFrameRef.current) {
-            cancelAnimationFrame(animationFrameRef.current);
+          
+          // AudioContext 정리
+          try {
+            if (animationFrameRef.current) {
+              cancelAnimationFrame(animationFrameRef.current);
+            }
+            if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+              audioContextRef.current.close();
+            }
+          } catch (cleanupError) {
+            console.error("AudioContext 정리 중 오류:", cleanupError);
           }
-          if (audioContextRef.current) {
-            audioContextRef.current.close();
+          
+          // 스트림 정리
+          try {
+            stream.getTracks().forEach((track) => {
+              track.stop();
+              track.enabled = false;
+            });
+          } catch (streamError) {
+            console.error("스트림 정리 중 오류:", streamError);
           }
-          stream.getTracks().forEach((track) => track.stop());
         }
       });
 
