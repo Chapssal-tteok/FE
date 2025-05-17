@@ -12,7 +12,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
-import { Send, Mic, MicOff, Volume2, RefreshCw } from "lucide-react"
+import { Send, Mic, MicOff, Volume2 } from "lucide-react"
 
 interface Question {
   _id: string
@@ -427,19 +427,31 @@ export default function InterviewPage() {
             type: 'audio/webm;codecs=opus'
           });
 
+          // 최소 녹음 시간 체크 (1초)
           if (audioBlob.size < 1000) {
             throw new Error("녹음 시간이 너무 짧습니다. 1초 이상 녹음해주세요.");
           }
+
+          // 최대 녹음 시간 체크 (30초)
+          if (audioBlob.size > 3000000) {
+            throw new Error("녹음 시간이 너무 깁니다. 30초 이내로 녹음해주세요.");
+          }
+
+          console.log("오디오 데이터 크기:", audioBlob.size, "bytes");
+          
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'audio.webm');
 
           const response = await VoiceControllerService.speechToText({
             file: audioBlob
           });
 
-          if (response.result?.transcription) {
-            setInput(response.result.transcription);
-          } else {
-            throw new Error("음성 인식에 실패했습니다.");
+          if (!response.result?.transcription) {
+            throw new Error("음성 인식 결과가 없습니다.");
           }
+
+          setInput(response.result.transcription);
+          setMediaError(null);
         } catch (error) {
           console.error("STT 오류:", error);
           if (error instanceof Error) {
@@ -460,13 +472,15 @@ export default function InterviewPage() {
         }
       });
 
-      mediaRecorder.start(1000);
+      // 500ms마다 데이터 수집 (더 짧은 간격으로 수집)
+      mediaRecorder.start(500);
       
+      // 30초 후 자동 중지 (최대 녹음 시간 제한)
       setTimeout(() => {
         if (mediaRecorder.state === "recording") {
           mediaRecorder.stop();
         }
-      }, 100000);
+      }, 30000);
     } catch (error) {
       console.error("Error in speech recognition:", error);
       setIsListening(false);
@@ -553,23 +567,6 @@ export default function InterviewPage() {
                           <div className="flex items-center justify-between mb-1">
                             <p className="font-medium">Q{index + 1}:</p>
                             <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={async () => {
-                                  if (!interview) return;
-                                  // 자기소개서 내용 가져오기
-                                  const resumeResponse = await ResumeQaControllerService.getResumeQasByResumeId(Number(resumeId))
-                                  const resumeContent = resumeResponse.result
-                                    ? resumeResponse.result.map(qa => `Q: ${qa.question}\nA: ${qa.answer || ''}`).join('\n\n')
-                                    : ""
-                                  await fetchAndUpdateQuestions(interview.company, interview.position, resumeContent)
-                                }}
-                                disabled={isLoading}
-                                className="h-6 w-6 hover:bg-[#DEFFCF]"
-                              >
-                                <RefreshCw className="w-3 h-3" />
-                              </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
