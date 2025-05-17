@@ -282,8 +282,10 @@ export default function InterviewPage() {
         resumeData = resumeResponse.result;
       } catch (resumeError) {
         console.error("자기소개서 데이터 로드 실패:", resumeError);
-        // 자기소개서 데이터가 없어도 답변은 저장
       }
+
+      // 현재 질문이 추가 질문인지 확인
+      const isFollowUpQuestion = currentQuestion.followUpQuestions && currentQuestion.followUpQuestions.length > 0;
       
       // 답변 저장
       await InterviewQaControllerService.updateAnswer(
@@ -318,22 +320,23 @@ export default function InterviewPage() {
         feedbackResponse = "피드백 생성 중 오류가 발생했습니다. 나중에 다시 시도해주세요.";
       }
 
-      // 추가 질문 생성
+      // 추가 질문 생성 (기본 질문에 대해서만)
       let followUps: string[] = [];
-      try {
-        const followUpResponse = await InterviewQaControllerService.generateFollowUp(
-          Number(interviewId),
-          {
-            question: currentQuestion.question,
-            answer: input
-          }
-        )
-        
-        followUps = followUpResponse.result?.question ? [followUpResponse.result.question] : [];
-        setFollowUpQuestions(followUps);
-      } catch (followUpError) {
-        console.error("추가 질문 생성 실패:", followUpError);
-        // 추가 질문 생성 실패는 치명적이지 않으므로 계속 진행
+      if (!isFollowUpQuestion) {
+        try {
+          const followUpResponse = await InterviewQaControllerService.generateFollowUp(
+            Number(interviewId),
+            {
+              question: currentQuestion.question,
+              answer: input
+            }
+          )
+          
+          followUps = followUpResponse.result?.question ? [followUpResponse.result.question] : [];
+          setFollowUpQuestions(followUps);
+        } catch (followUpError) {
+          console.error("추가 질문 생성 실패:", followUpError);
+        }
       }
 
       // 현재는 로컬 상태만 업데이트 (API 호출 없음)
@@ -344,7 +347,7 @@ export default function InterviewPage() {
           ...updated[prev.currentQuestionIndex],
           answer: input,
           feedback: feedbackResponse,
-          followUpQuestions: followUps,
+          followUpQuestions: isFollowUpQuestion ? [] : followUps, // 추가 질문에 대해서는 추가 질문을 생성하지 않음
         };
         return {
           ...prev,
