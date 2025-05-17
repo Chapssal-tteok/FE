@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { ApiResponseListInterviewDTO } from '../models/ApiResponseListInterviewDTO';
 import type { ApiResponseListResumeDTO } from '../models/ApiResponseListResumeDTO';
+import type { ApiResponseString } from '../models/ApiResponseString';
 import type { ApiResponseUserExistenceDTO } from '../models/ApiResponseUserExistenceDTO';
 import type { ApiResponseUserInfoDTO } from '../models/ApiResponseUserInfoDTO';
 import type { UpdateUserDTO } from '../models/UpdateUserDTO';
@@ -80,6 +81,18 @@ export class UserControllerService {
             query: {
                 'username': username,
             },
+        });
+    }
+    /**
+     * 사용자 탈퇴
+     * 현재 로그인된 사용자를 탈퇴시킵니다.
+     * @returns ApiResponseString OK
+     * @throws ApiError
+     */
+    public static deleteUser(): CancelablePromise<ApiResponseString> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/auth/users',
         });
     }
 }
