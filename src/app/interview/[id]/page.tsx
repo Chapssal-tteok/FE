@@ -5,7 +5,6 @@ import { InterviewControllerService, ResumeControllerService, InterviewQaControl
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
@@ -13,7 +12,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
-import { Send, Mic, MicOff, Volume2, File, RefreshCw } from "lucide-react"
+import { Send, Mic, MicOff, Volume2, RefreshCw } from "lucide-react"
 
 interface Question {
   _id: string
