@@ -600,7 +600,7 @@ export default function InterviewPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href={`/chat/${resumeId}`}>Chat</BreadcrumbLink>
+                    <BreadcrumbLink href={`/resume/${resumeId}`}>Resume</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>

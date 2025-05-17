@@ -107,7 +107,11 @@ export default function Chat() {
 
             if (!analysisResponse?.result?.analysis) {
               console.warn(`피드백이 비어있습니다: ${qa.resumeQaId}`);
-              return null;
+              return {
+                question: qa.question,
+                answer: qa.answer,
+                feedback: "피드백을 생성할 수 없습니다. 나중에 다시 시도해주세요."
+              };
             }
 
             return {
@@ -117,7 +121,11 @@ export default function Chat() {
             };
           } catch (error) {
             console.error(`피드백 생성 실패 (QA ID: ${qa.resumeQaId}):`, error);
-            return null;
+            return {
+              question: qa.question,
+              answer: qa.answer,
+              feedback: "피드백 생성 중 오류가 발생했습니다. 나중에 다시 시도해주세요."
+            };
           }
         }) || [];
 
@@ -142,6 +150,7 @@ export default function Chat() {
         setQaFeedbacks(feedbacks);
       } catch (error) {
         console.error("피드백 생성 중 오류 발생:", error);
+        alert("피드백 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
         setQaFeedbacks([]);
       }
     } catch (error) {
@@ -243,7 +252,7 @@ export default function Chat() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/writeResume">Write Resume</BreadcrumbLink>
+                    <BreadcrumbLink href={`/resume/${resumeId}`}>Resume</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
