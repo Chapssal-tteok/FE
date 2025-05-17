@@ -41,7 +41,6 @@ export default function InterviewPage() {
   const [interview, setInterview] = useState<Interview | null>(null)
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [mediaError, setMediaError] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -330,7 +329,6 @@ export default function InterviewPage() {
 
       // 다음 질문이 있으면 음성으로 읽기
       if (
-        isVoiceMode &&
         interview.currentQuestionIndex + 1 < interview.questions.length
       ) {
         const nextQuestion = interview.questions[interview.currentQuestionIndex + 1]
