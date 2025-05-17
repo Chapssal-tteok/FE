@@ -43,6 +43,7 @@ export default function InterviewPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [mediaError, setMediaError] = useState<string | null>(null)
+  const [audioLevel, setAudioLevel] = useState(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -50,6 +51,9 @@ export default function InterviewPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([])
   const [showFollowUpQuestions, setShowFollowUpQuestions] = useState<Record<string, boolean>>({})
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const animationFrameRef = useRef<number>(0)
 
   const speakText = useCallback(async (text: string) => {
     try {
@@ -345,28 +349,48 @@ export default function InterviewPage() {
   const startListening = async () => {
     setIsListening(true);
     setMediaError(null);
+    setAudioLevel(0);
     
     try {
-      // 미디어 장치 지원 확인
       if (typeof window === 'undefined') {
         throw new Error("브라우저 환경에서만 사용 가능합니다.");
       }
 
-      // 개발 환경에서의 처리
-      if (process.env.NODE_ENV === 'development') {
-        console.log("개발 환경에서는 음성 녹음이 제한될 수 있습니다.");
-      }
-
-      // 미디어 장치 접근 권한 요청
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
-            autoGainControl: true
+            autoGainControl: true,
+            sampleRate: 16000,
+            channelCount: 1
           } 
         });
+
+        // 오디오 컨텍스트 및 분석기 설정
+        audioContextRef.current = new AudioContext();
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = 256;
+        const source = audioContextRef.current.createMediaStreamSource(stream);
+        source.connect(analyserRef.current);
+
+        // 오디오 레벨 애니메이션 시작
+        const updateAudioLevel = () => {
+          if (!analyserRef.current) return;
+          
+          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+          analyserRef.current.getByteFrequencyData(dataArray);
+          
+          // 평균 레벨 계산
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          setAudioLevel(average / 128); // 0-2 범위로 정규화
+          
+          animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+        };
+        
+        updateAudioLevel();
+
       } catch (mediaError) {
         if (mediaError instanceof Error) {
           if (mediaError.name === 'NotAllowedError') {
@@ -380,18 +404,33 @@ export default function InterviewPage() {
         throw new Error("마이크 접근에 실패했습니다.");
       }
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 16000
+      });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.addEventListener("dataavailable", (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       });
 
       mediaRecorder.addEventListener("stop", async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-
         try {
+          if (audioChunksRef.current.length === 0) {
+            throw new Error("녹음된 오디오가 없습니다.");
+          }
+
+          const audioBlob = new Blob(audioChunksRef.current, { 
+            type: 'audio/webm;codecs=opus'
+          });
+
+          if (audioBlob.size < 1000) {
+            throw new Error("녹음 시간이 너무 짧습니다. 1초 이상 녹음해주세요.");
+          }
+
           const response = await VoiceControllerService.speechToText({
             file: audioBlob
           });
@@ -399,26 +438,39 @@ export default function InterviewPage() {
           if (response.result?.transcription) {
             setInput(response.result.transcription);
           } else {
-            throw new Error("음성 인식에 실패했습니다");
+            throw new Error("음성 인식에 실패했습니다.");
           }
         } catch (error) {
           console.error("STT 오류:", error);
-          setMediaError("음성 인식에 실패했습니다. 다시 시도해주세요.");
+          if (error instanceof Error) {
+            setMediaError(error.message);
+          } else {
+            setMediaError("음성 인식에 실패했습니다. 다시 시도해주세요.");
+          }
+        } finally {
+          setIsListening(false);
+          setAudioLevel(0);
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+          }
+          if (audioContextRef.current) {
+            audioContextRef.current.close();
+          }
+          stream.getTracks().forEach((track) => track.stop());
         }
-
-        setIsListening(false);
-        stream.getTracks().forEach((track) => track.stop());
       });
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
+      
       setTimeout(() => {
         if (mediaRecorder.state === "recording") {
           mediaRecorder.stop();
         }
-      }, 10000);
+      }, 100000);
     } catch (error) {
       console.error("Error in speech recognition:", error);
       setIsListening(false);
+      setAudioLevel(0);
       if (error instanceof Error) {
         setMediaError(error.message);
       } else {
@@ -432,6 +484,13 @@ export default function InterviewPage() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
       setIsListening(false);
+      setAudioLevel(0);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     }
   }
 
@@ -617,6 +676,21 @@ export default function InterviewPage() {
                       />
                       {mediaError && (
                         <p className="text-red-500 text-sm mt-2">{mediaError}</p>
+                      )}
+                      {isListening && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-lime-500 transition-all duration-100"
+                              style={{ 
+                                width: `${Math.min(100, audioLevel * 50)}%`,
+                                transform: `scaleX(${audioLevel})`,
+                                transformOrigin: 'left'
+                              }}
+                            />
+                          </div>
+                          <span className="text-sm text-gray-500">녹음 중...</span>
+                        </div>
                       )}
                     </div>
                     <div className="flex flex-col gap-3">
