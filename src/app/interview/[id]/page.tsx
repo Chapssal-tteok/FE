@@ -270,9 +270,19 @@ export default function InterviewPage() {
 
     try {
       // 자기소개서 데이터 가져오기
-      const resumeResponse = await ResumeControllerService.getResume(Number(interviewId))
-      if (!resumeResponse.result) {
-        throw new Error("자기소개서 정보를 불러올 수 없습니다.")
+      let resumeData = null;
+      try {
+        if (!resumeId) {
+          throw new Error("자기소개서 ID가 없습니다.");
+        }
+        const resumeResponse = await ResumeControllerService.getResume(Number(resumeId))
+        if (!resumeResponse.result) {
+          throw new Error("자기소개서 정보를 불러올 수 없습니다.");
+        }
+        resumeData = resumeResponse.result;
+      } catch (resumeError) {
+        console.error("자기소개서 데이터 로드 실패:", resumeError);
+        // 자기소개서 데이터가 없어도 답변은 저장
       }
       
       // 답변 저장
@@ -291,7 +301,7 @@ export default function InterviewPage() {
         {
           question: currentQuestion.question,
           answer: input,
-          resume: JSON.stringify(resumeResponse.result)
+          resume: resumeData ? JSON.stringify(resumeData) : "{}"
         }
       )
       
@@ -340,6 +350,11 @@ export default function InterviewPage() {
       }
     } catch (error) {
       console.error('Failed to submit answer:', error);
+      if (error instanceof Error) {
+        setMediaError(error.message);
+      } else {
+        setMediaError("답변 제출 중 오류가 발생했습니다.");
+      }
     } finally {
       setIsLoading(false);
     }
