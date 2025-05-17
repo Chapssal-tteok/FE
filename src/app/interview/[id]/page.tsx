@@ -251,7 +251,7 @@ export default function InterviewPage() {
     } else {
       loadInterview()
     }
-  }, [isLoggedIn, router, interviewId, loadInterview])
+  }, [isLoggedIn, router, interviewId, loadInterview, params, resumeId, searchParams])
 
   useEffect(() => {
     scrollToBottom()
@@ -342,27 +342,6 @@ export default function InterviewPage() {
       setIsLoading(false);
     }
   }
-
-  // 음성 모드 전환
-  const toggleVoiceMode = async () => {
-    // 이전 오디오 정리
-    if (currentAudio) {
-      currentAudio.onended = null;
-      currentAudio.pause();
-      currentAudio.src = '';
-      currentAudio.remove();
-      setCurrentAudio(null);
-    }
-
-    setIsVoiceMode(!isVoiceMode);
-    if (!isVoiceMode && interview?.questions[interview.currentQuestionIndex]) {
-      try {
-        await speakText(interview.questions[interview.currentQuestionIndex].question);
-      } catch (error) {
-        console.error("음성 모드 전환 중 오류:", error);
-      }
-    }
-  };
 
   // STT 음성 모드: 사용자가 답변한 음성을 텍스트로 변환
   const startListening = async () => {
