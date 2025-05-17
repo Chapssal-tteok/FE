@@ -427,31 +427,47 @@ export default function InterviewPage() {
             type: 'audio/webm;codecs=opus'
           });
 
-          // 최소 녹음 시간 체크 (1초)
+          // 오디오 데이터 검증
+          console.log("오디오 데이터 크기:", audioBlob.size, "bytes");
+          console.log("오디오 데이터 타입:", audioBlob.type);
+          
           if (audioBlob.size < 1000) {
             throw new Error("녹음 시간이 너무 짧습니다. 1초 이상 녹음해주세요.");
           }
 
-          // 최대 녹음 시간 체크 (30초)
           if (audioBlob.size > 3000000) {
             throw new Error("녹음 시간이 너무 깁니다. 30초 이내로 녹음해주세요.");
           }
 
-          console.log("오디오 데이터 크기:", audioBlob.size, "bytes");
-          
-          const formData = new FormData();
-          formData.append('file', audioBlob, 'audio.webm');
-
-          const response = await VoiceControllerService.speechToText({
-            file: audioBlob
-          });
-
-          if (!response.result?.transcription) {
-            throw new Error("음성 인식 결과가 없습니다.");
+          // 오디오 데이터 형식 검증
+          if (!audioBlob.type.includes('audio/')) {
+            throw new Error("지원하지 않는 오디오 형식입니다.");
           }
 
-          setInput(response.result.transcription);
-          setMediaError(null);
+          try {
+            const response = await VoiceControllerService.speechToText({
+              file: audioBlob
+            });
+
+            console.log("STT 응답:", response);
+
+            if (!response.result) {
+              throw new Error("음성 인식 서버 응답이 없습니다.");
+            }
+
+            if (!response.result.transcription) {
+              throw new Error("음성 인식 결과가 없습니다.");
+            }
+
+            setInput(response.result.transcription);
+            setMediaError(null);
+          } catch (sttError) {
+            console.error("STT 처리 중 오류:", sttError);
+            if (sttError instanceof Error) {
+              throw new Error(`음성 인식 실패: ${sttError.message}`);
+            }
+            throw new Error("음성 인식에 실패했습니다. 다시 시도해주세요.");
+          }
         } catch (error) {
           console.error("STT 오류:", error);
           if (error instanceof Error) {
