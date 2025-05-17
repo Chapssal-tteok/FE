@@ -330,6 +330,7 @@ export default function InterviewPage() {
         )
         
         followUps = followUpResponse.result?.question ? [followUpResponse.result.question] : [];
+        setFollowUpQuestions(followUps);
       } catch (followUpError) {
         console.error("추가 질문 생성 실패:", followUpError);
         // 추가 질문 생성 실패는 치명적이지 않으므로 계속 진행
