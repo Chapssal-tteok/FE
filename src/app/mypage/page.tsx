@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { ResumeList } from "@/components/mypage/ResumeList"
 import { InterviewList } from "@/components/mypage/InterviewList"
 import { PasswordChangeDialog } from "@/components/mypage/PasswordChangeDialog"
-//import { AccountDeleteDialog } from "@/components/mypage/AccountDeleteDialog"
+import { AccountDeleteDialog } from "@/components/mypage/AccountDeleteDialog"
 import { DeleteAllRecordsDialog } from "@/components/mypage/DeleteAllRecordsDialog"
 import Link from "next/link"
 import Image from "next/image"
@@ -34,13 +34,13 @@ interface Interview {
 }
 
 export default function MyPage() {
-  const { isLoggedIn, logout } = useAuth()
+  const { isLoggedIn, logout, user } = useAuth()
   const router = useRouter()
   const [resumes, setResumes] = useState<Resume[]>([])
   const [interviews, setInterviews] = useState<Interview[]>([])
   const [userInfo, setUserInfo] = useState<UserInfoDTO | null>(null)
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
-  //const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleteAllRecordsDialogOpen, setIsDeleteAllRecordsDialogOpen] = useState(false)
 
   const fetchResumes = useCallback(async () => {
@@ -174,24 +174,24 @@ export default function MyPage() {
     }
   }
 
-  // 회원 탈퇴 처리 -> 회원 탈퇴 API 추가 후 사용
-  // const handleAccountDelete = async (password: string) => {
-  //   try {
-  //     if (!user) throw new Error("User not found")
+  // 회원 탈퇴 처리
+  const handleAccountDelete = async () => {
+    try {
+      if (!user) throw new Error("User not found")
       
-  //     const response = await UserControllerService.deleteUserInfo()
+      const response = await UserControllerService.deleteUser()
 
-  //     if (!response.isSuccess) {
-  //       throw new Error(response.message || "회원 탈퇴에 실패하였습니다.")
-  //     }
+      if (!response.isSuccess) {
+        throw new Error(response.message || "회원 탈퇴에 실패하였습니다.")
+      }
       
-  //     logout()
-  //     router.push("/")
-  //   } catch (error) {
-  //     console.error("회원 탈퇴 실패:", error)
-  //     alert(error instanceof Error ? error.message : "오류가 발생했습니다.")
-  //   }
-  // }
+      logout()
+      router.push("/")
+    } catch (error) {
+      console.error("회원 탈퇴 실패:", error)
+      alert(error instanceof Error ? error.message : "오류가 발생했습니다.")
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -269,7 +269,7 @@ export default function MyPage() {
               <span className="font-medium">계정 삭제</span>
               <Button 
                 variant="outline" 
-                //onClick={() => setIsDeleteDialogOpen(true)}
+                onClick={() => setIsDeleteDialogOpen(true)}
                 className="text-red-600 hover:bg-red-50"
               >
                 계정 삭제
@@ -285,11 +285,11 @@ export default function MyPage() {
         onSubmit={handlePasswordChange}
       />
 
-      {/* <AccountDeleteDialog
+      <AccountDeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleAccountDelete}
-      /> */}
+      />
 
       <DeleteAllRecordsDialog
         isOpen={isDeleteAllRecordsDialogOpen}
