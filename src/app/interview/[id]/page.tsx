@@ -44,6 +44,7 @@ export default function InterviewPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [mediaError, setMediaError] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -58,10 +59,14 @@ export default function InterviewPage() {
       
       // 이전 오디오 정리
       if (currentAudio) {
-        currentAudio.onended = null;
-        currentAudio.pause();
-        currentAudio.src = '';
-        currentAudio.remove();
+        try {
+          currentAudio.onended = null;
+          currentAudio.pause();
+          currentAudio.src = '';
+          currentAudio.remove();
+        } catch (cleanupError) {
+          console.error("이전 오디오 정리 중 오류:", cleanupError);
+        }
         setCurrentAudio(null);
       }
 
@@ -71,40 +76,32 @@ export default function InterviewPage() {
 
       console.log("TTS 응답:", response);
       
-      if (response.result) {
-        // 새로운 오디오 요소 생성
-        const audio = new Audio();
-        
+      if (!response.result) {
+        throw new Error("음성 합성에 실패했습니다");
+      }
+
+      // 새로운 오디오 요소 생성
+      const audio = new Audio();
+      
+      try {
         // URL인 경우
         if (response.result.startsWith('http')) {
-          try {
-            // URL이 유효한지 확인
-            const url = new URL(response.result);
-            audio.src = url.href;
-            console.log("오디오 URL:", url.href);
-          } catch (urlError) {
-            console.error("잘못된 URL 형식:", response.result);
-            throw new Error("잘못된 오디오 URL 형식입니다");
-          }
+          const url = new URL(response.result);
+          audio.src = url.href;
+          console.log("오디오 URL:", url.href);
         } else if (response.result.startsWith('data:audio')) {
-          // data URL 형식인 경우
           audio.src = response.result;
         } else {
           // Base64 문자열인 경우
-          try {
-            const byteCharacters = atob(response.result);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const audioData = new Uint8Array(byteNumbers);
-            const audioBlob = new Blob([audioData], { type: 'audio/mp3' });
-            const audioUrl = URL.createObjectURL(audioBlob);
-            audio.src = audioUrl;
-          } catch (e) {
-            console.error("Base64 디코딩 실패:", e);
-            throw new Error("오디오 데이터 형식이 올바르지 않습니다");
+          const byteCharacters = atob(response.result);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
+          const audioData = new Uint8Array(byteNumbers);
+          const audioBlob = new Blob([audioData], { type: 'audio/mp3' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          audio.src = audioUrl;
         }
 
         // 오디오 로드 완료 후 재생
@@ -115,55 +112,52 @@ export default function InterviewPage() {
             await audio.play();
           } catch (playError) {
             console.error("오디오 재생 실패:", playError);
-            audio.remove();
-            setCurrentAudio(null);
+            cleanupAudio(audio);
           }
         };
 
         // 재생이 끝나면 정리
         audio.onended = () => {
           console.log("오디오 재생 종료");
-          audio.onended = null;
-          audio.pause();
-          audio.src = '';
-          audio.remove();
-          setCurrentAudio(null);
+          cleanupAudio(audio);
         };
 
         // 오류 발생 시 정리
         audio.onerror = (error) => {
           console.error("오디오 로드 실패:", error);
           console.error("오디오 소스:", audio.src);
-          audio.onended = null;
-          audio.pause();
-          audio.src = '';
-          audio.remove();
-          setCurrentAudio(null);
+          cleanupAudio(audio);
         };
 
         // 오디오 로드 시작
         audio.load();
 
-      } else {
-        throw new Error("음성 합성에 실패했습니다");
+      } catch (error) {
+        console.error("오디오 처리 중 오류:", error);
+        cleanupAudio(audio);
+        throw error;
       }
+
     } catch (error) {
       console.error("TTS 오류:", error);
+      throw error;
     }
   }, [currentAudio]);
 
-  // 컴포넌트 언마운트 시 정리
-  useEffect(() => {
-    return () => {
-      if (currentAudio) {
-        currentAudio.onended = null;
-        currentAudio.pause();
-        currentAudio.src = '';
-        currentAudio.remove();
-        setCurrentAudio(null);
-      }
-    };
-  }, [currentAudio]);
+  // 오디오 정리 함수
+  const cleanupAudio = (audio: HTMLAudioElement) => {
+    try {
+      audio.onended = null;
+      audio.onloadeddata = null;
+      audio.onerror = null;
+      audio.pause();
+      audio.src = '';
+      audio.remove();
+      setCurrentAudio(null);
+    } catch (error) {
+      console.error("오디오 정리 중 오류:", error);
+    }
+  };
 
   const fetchAndUpdateQuestions = useCallback(async (company: string, position: string, resumeContent: string) => {
     // 면접 질문 생성
@@ -190,14 +184,8 @@ export default function InterviewPage() {
       }))
     }));
 
-    //음성 모드일 경우 첫 질문 읽기
-    if (isVoiceMode && updatedQas.length > 0) {
-      if (updatedQas[0].question) {
-        await speakText(updatedQas[0].question)
-      }
-    }
     return updatedQas;
-  }, [interviewId, isVoiceMode, speakText]);
+  }, [interviewId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -241,13 +229,6 @@ export default function InterviewPage() {
           })),
           currentQuestionIndex: 0,
         })
-        
-        //음성 모드일 경우 첫 질문 읽기
-        if (isVoiceMode && qas.length > 0) {
-          if (qas[0].question) {
-            await speakText(qas[0].question)
-          }
-        }
       }
 
     } catch (error) {
@@ -255,7 +236,7 @@ export default function InterviewPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [interviewId, isVoiceMode, speakText, fetchAndUpdateQuestions, resumeId])
+  }, [interviewId, fetchAndUpdateQuestions, resumeId])
 
   useEffect(() => {
     console.log("Params:", params);
@@ -387,8 +368,42 @@ export default function InterviewPage() {
   // STT 음성 모드: 사용자가 답변한 음성을 텍스트로 변환
   const startListening = async () => {
     setIsListening(true);
+    setMediaError(null);
+    
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // 미디어 장치 지원 확인
+      if (typeof window === 'undefined') {
+        throw new Error("브라우저 환경에서만 사용 가능합니다.");
+      }
+
+      // 개발 환경에서의 처리
+      if (process.env.NODE_ENV === 'development') {
+        console.log("개발 환경에서는 음성 녹음이 제한될 수 있습니다.");
+      }
+
+      // 미디어 장치 접근 권한 요청
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
+      } catch (mediaError) {
+        if (mediaError instanceof Error) {
+          if (mediaError.name === 'NotAllowedError') {
+            throw new Error("마이크 접근 권한이 필요합니다. 브라우저 설정에서 권한을 허용해주세요.");
+          } else if (mediaError.name === 'NotFoundError') {
+            throw new Error("마이크를 찾을 수 없습니다. 마이크가 연결되어 있는지 확인해주세요.");
+          } else if (mediaError.name === 'NotReadableError') {
+            throw new Error("마이크에 접근할 수 없습니다. 다른 프로그램이 마이크를 사용 중일 수 있습니다.");
+          }
+        }
+        throw new Error("마이크 접근에 실패했습니다.");
+      }
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -398,7 +413,7 @@ export default function InterviewPage() {
       });
 
       mediaRecorder.addEventListener("stop", async () => {
-        const audioBlob = new Blob(audioChunksRef.current);
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
         try {
           const response = await VoiceControllerService.speechToText({
@@ -412,6 +427,7 @@ export default function InterviewPage() {
           }
         } catch (error) {
           console.error("STT 오류:", error);
+          setMediaError("음성 인식에 실패했습니다. 다시 시도해주세요.");
         }
 
         setIsListening(false);
@@ -420,19 +436,26 @@ export default function InterviewPage() {
 
       mediaRecorder.start();
       setTimeout(() => {
-        mediaRecorder.stop();
+        if (mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+        }
       }, 10000);
     } catch (error) {
       console.error("Error in speech recognition:", error);
       setIsListening(false);
+      if (error instanceof Error) {
+        setMediaError(error.message);
+      } else {
+        setMediaError("음성 녹음 중 오류가 발생했습니다.");
+      }
     }
   };
 
   // 음성 입력 중지
   const stopListening = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop()
-      setIsListening(false)
+      mediaRecorderRef.current.stop();
+      setIsListening(false);
     }
   }
 
@@ -480,39 +503,6 @@ export default function InterviewPage() {
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            {/* 모드 전환 버튼 */}
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={toggleVoiceMode}
-                variant="outline"
-                className="rounded-full px-3 py-1.5 flex items-center gap-1 text-xs hover:bg-[#DEFFCF]/40"
-              >
-                {isVoiceMode ? (
-                  <>
-                    <Volume2 className="w-4 h-4" />
-                    음성 모드
-                  </>
-                ) : (
-                  <>
-                    <MicOff className="w-4 h-4" />
-                    텍스트 모드
-                  </>
-                )}
-              </Button>
-              {isVoiceMode && (
-                <Button
-                  type="button"
-                  onClick={isListening ? stopListening : startListening}
-                  disabled={isLoading}
-                  variant={isListening ? "default" : "outline"}
-                  className="rounded-full px-3 py-1.5 flex items-center gap-1 text-xs hover:bg-[#DEFFCF]/40"
-                >
-                  <Mic className="w-4 h-4" />
-                  {isListening ? "녹음 중지" : "음성 녹음"}
-                </Button>
-              )}
-            </div>
           </header>
           {/* Main Chat Area */}
           <div className={`flex-1 flex flex-col h-screen transition-all duration-300`}>
@@ -525,27 +515,38 @@ export default function InterviewPage() {
                     <div className="flex justify-start">
                       <div className="relative max-w-[80%] bg-[#DEFFCF]/40 rounded-2xl">
                         <div className="p-4">
-                          <p className="font-medium mb-1">Q{index + 1}:</p>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="font-medium">Q{index + 1}:</p>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={async () => {
+                                  if (!interview) return;
+                                  // 자기소개서 내용 가져오기
+                                  const resumeResponse = await ResumeQaControllerService.getResumeQasByResumeId(Number(resumeId))
+                                  const resumeContent = resumeResponse.result
+                                    ? resumeResponse.result.map(qa => `Q: ${qa.question}\nA: ${qa.answer || ''}`).join('\n\n')
+                                    : ""
+                                  await fetchAndUpdateQuestions(interview.company, interview.position, resumeContent)
+                                }}
+                                disabled={isLoading}
+                                className="h-6 w-6 hover:bg-[#DEFFCF]"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => speakText(q.question)}
+                                disabled={isLoading}
+                                className="h-6 w-6 hover:bg-[#DEFFCF]"
+                              >
+                                <Volume2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
                           <p className="whitespace-pre-wrap">{q.question}</p>
-                        </div>
-                        <div className="absolute bottom-2 right-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={async () => {
-                              if (!interview) return;
-                              // 자기소개서 내용 가져오기
-                              const resumeResponse = await ResumeQaControllerService.getResumeQasByResumeId(Number(resumeId))
-                              const resumeContent = resumeResponse.result
-                                ? resumeResponse.result.map(qa => `Q: ${qa.question}\nA: ${qa.answer || ''}`).join('\n\n')
-                                : ""
-                              await fetchAndUpdateQuestions(interview.company, interview.position, resumeContent)
-                            }}
-                            disabled={isLoading}
-                            className="h-6 w-6 hover:bg-[#DEFFCF]"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                          </Button>
                         </div>
                       </div>
                     </div>
@@ -630,13 +631,18 @@ export default function InterviewPage() {
               <div className="max-w-3xl mx-auto">
                 {interview && interview.questions.length > 0 && (
                   <form onSubmit={handleSubmit} className="flex gap-3">
-                    <Textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="답변을 입력하세요"
-                      className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
-                      disabled={isLoading || isListening}
-                    />
+                    <div className="flex-1">
+                      <Textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="답변을 입력하세요"
+                        className="h-[100px] resize-none overflow-y-auto bg-[#DEFFCF] border-0 rounded-2xl"
+                        disabled={isLoading || isListening}
+                      />
+                      {mediaError && (
+                        <p className="text-red-500 text-sm mt-2">{mediaError}</p>
+                      )}
+                    </div>
                     <div className="flex flex-col gap-3">
                       <Button
                         type="submit"
@@ -645,11 +651,23 @@ export default function InterviewPage() {
                       >
                         <Send className="w-4 h-4" />
                       </Button>
-                      <Link href={`/chat/${resumeId}`}>
-                        <Button className="bg-lime-500 hover:bg-lime-600 rounded-full px-6">
-                          <File className="w-4 h-4" />
-                        </Button>
-                      </Link>
+                      <Button
+                        type="button"
+                        onClick={isListening ? stopListening : startListening}
+                        disabled={isLoading}
+                        variant={isListening ? "default" : "outline"}
+                        className="rounded-full px-6 hover:bg-[#DEFFCF]/40"
+                      >
+                        {isListening ? (
+                          <>
+                            <MicOff className="w-4 h-4" />
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="w-4 h-4" />
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </form>
                 )}
