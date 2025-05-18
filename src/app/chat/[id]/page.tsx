@@ -13,6 +13,7 @@ import { useRouter, useParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import ReactMarkdown from 'react-markdown'
 
 interface QaFeedback {
   question: string;
@@ -368,7 +369,9 @@ export default function Chat() {
                         <Bot className="w-6 h-6 text-lime-600" />
                         <h3 className="text-lg font-semibold">피드백 {index + 1}</h3>
                       </div>
-                      <p className="whitespace-pre-wrap">{qa.feedback}</p>
+                      <div className="prose prose-sm max-w-none">
+                        <ReactMarkdown>{qa.feedback}</ReactMarkdown>
+                      </div>
                     </div>
                   ))
                 )}

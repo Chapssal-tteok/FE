@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { Send, Mic, MicOff, Volume2 } from "lucide-react"
+import ReactMarkdown from 'react-markdown'
 
 interface Question {
   _id: string
@@ -722,7 +723,9 @@ export default function InterviewPage() {
                             {/* 피드백 텍스트 */}
                             <div className="space-y-2">
                             {typeof q.feedback === "string" && (
-                              <p className="text-sm text-gray-600 whitespace-pre-line">{q.feedback}</p>
+                              <div className="prose prose-sm max-w-none">
+                                <ReactMarkdown>{q.feedback}</ReactMarkdown>
+                              </div>
                             )}
                             </div>
                           </div>
