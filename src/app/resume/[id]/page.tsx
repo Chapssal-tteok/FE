@@ -12,6 +12,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import ReactMarkdown from 'react-markdown'
 
 interface Resume {
   id: string
@@ -27,6 +28,7 @@ interface Question {
   id: number
   question: string
   answer: string
+  feedback?: string
 }
 
 export default function ResumePage() {
@@ -66,7 +68,8 @@ export default function ResumePage() {
         setQuestions(qaResponse.result.map((qa, index) => ({
           id: qa.resumeQaId ?? index + 1,
           question: qa.question ?? "",
-          answer: qa.answer ?? ""
+          answer: qa.answer ?? "",
+          feedback: qa.analysis ?? ""
         })))
       }
     } catch (error) {
@@ -222,7 +225,7 @@ export default function ResumePage() {
         </div>
       </header>
 
-      <div className="container max-w-4xl mx-auto mt-15 relative z-20">
+      <div className="container max-w-7xl mx-auto mt-15 relative z-20">
         <div className="flex items-center justify-between mb-1">
           <Button variant="ghost" className="text-bold text-lime-500 hover:text-lime-600" onClick={() => router.back()}>
             <ArrowLeft className="w-6 h-6 mt-[-4px]" />
@@ -230,122 +233,134 @@ export default function ResumePage() {
           </Button>
         </div>
       
-        <Card className="bg-[#DEFFCF]/40 backdrop-blur-xs rounded-3xl">
-          <CardContent>
-            <div className="flex items-center justify-start space-x-2 mb-4">
-              <h2 className="text-xl font-bold text-gray-800">{resume.title ?? "자기소개서"}</h2>
-              <h3 className="text-lg text-gray-700">{resume.company} {resume.position}</h3>
-              <span className="text-sm text-gray-500 ml-auto">
-                {resume.createdAt ? new Date(resume.createdAt).toLocaleDateString() : ""}
-              </span>
-            </div>
-          
-            <div className="prose max-w-none space-y-4">
-              {isEditing ? (
-                <>
-                  {questions.map((q, index) => (
-                    <div key={q.id} className="space-y-2 p-4 bg-white/70 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-semibold">문항 {index + 1}</h3>
+        <div className="flex gap-6">
+          <Card className="w-full bg-[#DEFFCF]/40 backdrop-blur-xs rounded-3xl">
+            <CardContent>
+              <div className="flex items-center justify-start space-x-2 mb-4">
+                <h2 className="text-xl font-bold text-gray-800">{resume.title ?? "자기소개서"}</h2>
+                <h3 className="text-lg text-gray-700">{resume.company} {resume.position}</h3>
+                <span className="text-sm text-gray-500 ml-auto">
+                  {resume.createdAt ? new Date(resume.createdAt).toLocaleDateString() : ""}
+                </span>
+                <div className="flex space-x-2 ml-4">
+                  {isEditing ? (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg shadow-md transition-colors"
+                        onClick={handleCancelClick}
+                      >
+                        취소
+                      </Button>
+                      <Button 
+                        className="bg-lime-400 hover:bg-lime-500 text-white px-4 py-2 rounded-lg shadow-md transition-colors"
+                        onClick={handleSaveClick}
+                      >
+                        저장
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        className="bg-lime-400 hover:bg-lime-500 text-white px-4 py-2 rounded-lg shadow-md transition-colors"
+                        onClick={handleEditClick}
+                      >
+                        자기소개서 수정
+                      </Button>
+                      <Link href={`/chat/${resumeId}`}>
                         <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => deleteQuestion(q.id)} 
-                          className="text-red-500"
+                          className="bg-lime-400 hover:bg-lime-500 text-white px-4 py-2 rounded-lg shadow-md transition-colors"
                         >
-                          <MinusCircle className="w-4 h-4 mt-[-2px]" />
-                          문항 삭제
+                          AI 피드백 받기
                         </Button>
+                      </Link>
+                      <Button 
+                        className="bg-lime-400 hover:bg-lime-500 text-white px-4 py-2 rounded-lg shadow-md transition-colors"
+                        onClick={handleInterviewClick}
+                      >
+                        면접 연습하기
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            
+              <div className="prose max-w-none space-y-4">
+                {isEditing ? (
+                  <>
+                    {questions.map((q, index) => (
+                      <div key={q.id} className="space-y-2 p-4 bg-white/70 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-lg font-semibold">문항 {index + 1}</h3>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => deleteQuestion(q.id)}
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            <MinusCircle className="w-5 h-5" />
+                          </Button>
+                        </div>
+                        <Input
+                          value={q.question}
+                          onChange={(e) => {
+                            const newQuestions = [...questions]
+                            newQuestions[index].question = e.target.value
+                            setQuestions(newQuestions)
+                          }}
+                          placeholder="질문을 입력하세요"
+                          className="bg-white"
+                        />
+                        <Textarea
+                          value={q.answer}
+                          onChange={(e) => {
+                            const newQuestions = [...questions]
+                            newQuestions[index].answer = e.target.value
+                            setQuestions(newQuestions)
+                          }}
+                          placeholder="답변을 입력하세요"
+                          className="min-h-[100px] bg-white"
+                        />
                       </div>
-
-                      <Input
-                        value={q.question}
-                        onChange={(e) => {
-                          const newQuestions = questions.map((item) => 
-                            item.id === q.id ? { ...item, question: e.target.value } : item)
-                          setQuestions(newQuestions)
-                        }}
-                        className="bg-white/80"
-                        placeholder="문항을 입력하세요"
-                      />
-
-                      <Textarea
-                        value={q.answer}
-                        onChange={(e) => {
-                          const newQuestions = questions.map((item) =>
-                            item.id === q.id ? { ...item, answer: e.target.value } : item)
-                          setQuestions(newQuestions)
-                        }}
-                        className="min-h-[100px] bg-white/80"
-                        placeholder="답변을 입력하세요"
-                      />
-                    </div>
-                  ))}
-
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={addQuestion} 
-                    className="text-lime-600"
-                  >
-                    <PlusCircle className="w-4 h-4 mt-[-2px]" />
-                    문항 추가
-                  </Button>
-                </>
-              ) : (
-                questions.map((q, index) => (
-                  <div key={q.id} className="space-y-2 p-4 bg-white/70 rounded-lg">
-                    <h3 className="text-lg font-semibold">문항 {index + 1}</h3>
-                    <p className="font-medium">Q: {q.question}</p>
-                    <p className="whitespace-pre-wrap">A: {q.answer}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end mt-5 space-x-4">
-          {isEditing ? (
-            <>
-              <Button 
-                variant="outline" 
-                className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
-                onClick={handleCancelClick}
-              >
-                취소
-              </Button>
-              <Button 
-                className="bg-lime-400 hover:bg-lime-500 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
-                onClick={handleSaveClick}
-              >
-                저장
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button 
-                variant="outline" 
-                className="bg-lime-400 hover:bg-lime-500 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
-                onClick={handleEditClick}
-              >
-                자기소개서 수정
-              </Button>
-              <Link href={`/chat/${resumeId}`}>
-                <Button 
-                  className="bg-lime-400 hover:bg-lime-500 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
-                >
-                  AI 피드백 받기
-                </Button>
-              </Link>
-              <Button 
-                className="bg-lime-400 hover:bg-lime-500 text-white px-6 py-2 rounded-lg shadow-md transition-colors"
-                onClick={handleInterviewClick}
-              >
-                면접 연습하기
-              </Button>
-            </>
-          )}
+                    ))}
+                    <Button
+                      onClick={addQuestion}
+                      className="w-full bg-lime-500 hover:bg-lime-600 text-white"
+                    >
+                      <PlusCircle className="w-5 h-5 mr-2" />
+                      문항 추가
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {questions.map((q, index) => (
+                      <div key={q.id} className="flex gap-6">
+                        {/* 문항 영역 */}
+                        <div className="w-1/2 space-y-2 p-4 bg-white/70 rounded-lg">
+                          <h3 className="text-lg font-semibold">문항 {index + 1}</h3>
+                          <p className="font-medium text-gray-700">{q.question}</p>
+                          <p className="whitespace-pre-wrap">{q.answer}</p>
+                        </div>
+                        
+                        {/* 피드백 영역 */}
+                        <div className="w-1/2 p-4 bg-white/70 rounded-lg">
+                          <h3 className="text-lg font-semibold mb-2">문항 {index + 1} 피드백</h3>
+                          {q.feedback ? (
+                            <div className="prose prose-sm max-w-none">
+                              <ReactMarkdown>{q.feedback}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            <p className="text-gray-500">아직 피드백이 없습니다.</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>    
