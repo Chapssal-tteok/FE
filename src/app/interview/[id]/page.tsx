@@ -724,7 +724,15 @@ export default function InterviewPage() {
                             <div className="space-y-2">
                             {typeof q.feedback === "string" && (
                               <div className="prose prose-sm max-w-none">
-                                <ReactMarkdown>{q.feedback}</ReactMarkdown>
+                                <ReactMarkdown>
+                                  {q.feedback.split('\n').map((line, i, lines) => {
+                                    // 각 줄이 비어있지 않고, 마지막 줄이 아니며, 다음 줄이 비어있지 않은 경우에만 줄바꿈 추가
+                                    if (line.trim() && i < lines.length - 1 && lines[i + 1].trim()) {
+                                      return line + '\n\n';
+                                    }
+                                    return line;
+                                  }).join('')}
+                                </ReactMarkdown>
                               </div>
                             )}
                             </div>
