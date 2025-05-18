@@ -181,7 +181,8 @@ export default function ResumePage() {
       const interviewResponse = await InterviewControllerService.createInterview({
         title: `${company} ${position} 면접 연습`,
         company: company,
-        position: position
+        position: position,
+        resumeId: Number(resumeId)
       });
 
       if (!interviewResponse.result?.interviewId) {

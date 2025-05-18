@@ -118,10 +118,26 @@ export default function NewResume() {
       }
     }
     try {
+      // 먼저 자기소개서 생성
+      const createResumeRequest: CreateResumeDTO = {
+        title,
+        company,
+        position,
+      }
+
+      const resumeResponse = await ResumeControllerService.createResume(createResumeRequest)
+      const resumeId = resumeResponse.result?.resumeId
+
+      if(!resumeId) {
+        throw new Error("자기소개서 생성 실패")
+      }
+
+      // 면접 생성
       const createInterviewRequest: CreateInterviewDTO = {
         title,
         company,
         position,
+        resumeId
       }
       
       const interviewResponse = await InterviewControllerService.createInterview(createInterviewRequest);
@@ -139,7 +155,7 @@ export default function NewResume() {
         await InterviewQaControllerService.createInterviewQa(interviewId, createInterviewQaRequest);
       }
 
-      router.push(`/interview/${interviewId}`)
+      router.push(`/interview/${interviewId}?resume_id=${resumeId}`)
     } catch (error) {
       console.error("Interview 제출 실패:", error)
       alert("제출 중 오류가 발생했습니다.")

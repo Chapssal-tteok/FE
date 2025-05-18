@@ -14,6 +14,7 @@ interface Interview {
   position: string
   createdAt: string
   updatedAt: string
+  resumeId: string
 }
 
 interface InterviewItemProps {
@@ -39,7 +40,7 @@ const InterviewItem = memo(function InterviewItem({
         aria-label={`${interview.title} 면접 선택`}
       />
       <Link 
-        href={`/interview/${interview.interviewId}`} 
+        href={`/interview/${interview.interviewId}?resume_id=${interview.resumeId}`} 
         className="flex-1 ml-4 hover:text-lime-600 transition-colors"
         aria-label={`${interview.title} 면접 상세 보기`}
       >

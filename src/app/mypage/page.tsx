@@ -31,6 +31,7 @@ interface Interview {
   position: string
   createdAt: string
   updatedAt: string
+  resumeId: string
 }
 
 export default function MyPage() {
@@ -77,6 +78,7 @@ export default function MyPage() {
             position: interview.position || "",
             createdAt: interview.createdAt || "",
             updatedAt: interview.updatedAt || "",
+            resumeId: String(interview.resumeId || ""),
           })))
         } else {
           console.error("Unexpected response format:", response.result)

@@ -30,6 +30,7 @@ interface Interview {
   questions: Question[]
   currentQuestionIndex: number
   title: string
+  resumeId: string
 }
 
 export default function InterviewPage() {
@@ -169,7 +170,7 @@ export default function InterviewPage() {
       {
         company,
         position,
-        resumeContent
+        resumeContent: `[Resume ID: ${resumeId}]\n${resumeContent}`
       }
     )
     // 질문 목록 다시 가져오기
@@ -188,7 +189,7 @@ export default function InterviewPage() {
     }));
 
     return updatedQas;
-  }, [interviewId]);
+  }, [interviewId, resumeId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -223,6 +224,7 @@ export default function InterviewPage() {
           company: data?.company || "",
           position: data?.position || "",
           title: data?.title || "",
+          resumeId: resumeId || "",
           questions: qas.map((qa) => ({
             _id: String(qa.interviewQaId),
             question: qa.question || "",
@@ -252,6 +254,9 @@ export default function InterviewPage() {
     } else if (!interviewId || isNaN(Number(interviewId))) {
       console.error("Invalid interviewId:", interviewId);
       router.push("/writeResume");
+    } else if (!resumeId) {
+      console.error("No resumeId provided");
+      router.push("/mypage");
     } else {
       loadInterview()
     }
@@ -340,7 +345,6 @@ export default function InterviewPage() {
         }
       }
 
-      // 현재는 로컬 상태만 업데이트 (API 호출 없음)
       setInterview((prev) => {
         if (!prev) return prev;
         const updated = [...prev.questions];
@@ -389,12 +393,12 @@ export default function InterviewPage() {
       setInput('')
 
       // 다음 질문이 있으면 음성으로 읽기
-      if (
-        interview.currentQuestionIndex + 1 < interview.questions.length
-      ) {
-        const nextQuestion = interview.questions[interview.currentQuestionIndex + 1]
-        await speakText(nextQuestion.question)
-      }
+      // if (
+      //   interview.currentQuestionIndex + 1 < interview.questions.length
+      // ) {
+      //   const nextQuestion = interview.questions[interview.currentQuestionIndex + 1]
+      //   await speakText(nextQuestion.question)
+      // }
     } catch (error) {
       console.error('Failed to submit answer:', error);
       if (error instanceof Error) {
@@ -725,13 +729,7 @@ export default function InterviewPage() {
                             {typeof q.feedback === "string" && (
                               <div className="prose prose-sm max-w-none">
                                 <ReactMarkdown>
-                                  {q.feedback.split('\n').map((line, i, lines) => {
-                                    // 각 줄이 비어있지 않고, 마지막 줄이 아니며, 다음 줄이 비어있지 않은 경우에만 줄바꿈 추가
-                                    if (line.trim() && i < lines.length - 1 && lines[i + 1].trim()) {
-                                      return line + '\n\n';
-                                    }
-                                    return line;
-                                  }).join('')}
+                                  {q.feedback}
                                 </ReactMarkdown>
                               </div>
                             )}
