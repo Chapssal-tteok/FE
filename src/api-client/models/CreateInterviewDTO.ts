@@ -4,6 +4,10 @@
 /* eslint-disable */
 export type CreateInterviewDTO = {
     /**
+     * 자기소개서 ID
+     */
+    resumeId: number;
+    /**
      * 면접 제목
      */
     title: string;

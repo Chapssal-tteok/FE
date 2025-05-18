@@ -5,6 +5,7 @@
 export type CreateInterviewResultDTO = {
     interviewId?: number;
     username?: string;
+    resumeId?: number;
     title?: string;
     company?: string;
     position?: string;
